@@ -71,12 +71,22 @@ TIME_SLOTS = (
     ('evening', 'Evening (17:00-21:00)'),
 )
 
+SERVICE_CATEGORIES = (
+    ('mecanic_auto', 'Mecanic Auto'),
+    ('autocolant_folie_auto', 'Autocolant & Folie Auto'),
+    ('detailing_auto_profesionist', 'Detailing Auto Profesionist'),
+    ('itp', 'ITP'),
+    ('tapiterie_auto', 'Tapițerie Auto'),
+    ('vulcanizare_auto_mobila', 'Vulcanizare Auto Mobilă'),
+    ('tractari_auto', 'Tractări Auto'),
+    ('tuning_auto', 'Tuning Auto'),
+)
+
 class User(models.Model):
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     full_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, unique=True)
-    password_hash = models.CharField(max_length=255)
     profile_photo = models.URLField()  # Required: Stores URL for profile photo
     user_type = models.CharField(max_length=20, choices=USER_TYPES)
     business_address = models.CharField(max_length=255, blank=True, null=True)
@@ -89,8 +99,6 @@ class User(models.Model):
     availability_times = MultiSelectField(choices=TIME_SLOTS, blank=True, null=True)
     approval_status = models.CharField(max_length=20, choices=APPROVAL_STATUSES, default='pending')
     account_status = models.CharField(max_length=20, choices=ACCOUNT_STATUSES, default='active')
-    approved_at = models.DateTimeField(blank=True, null=True)
-    admin = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_users')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -110,16 +118,6 @@ class CarBrand(models.Model):
     def __str__(self):
         return self.brand_name
 
-class ServiceCategory(models.Model):
-    category_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    category_name = models.CharField(max_length=255, unique=True)
-
-    class Meta:
-        db_table = 'service_categories'
-
-    def __str__(self):
-        return self.category_name
-
 class Tag(models.Model):
     tag_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tag_name = models.CharField(max_length=100, unique=True)
@@ -135,7 +133,7 @@ class Service(models.Model):
     service_name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
     service_photo = models.URLField()  # Required: Stores URL for service photo
-    category = models.ForeignKey(ServiceCategory, on_delete=models.CASCADE, related_name='services')
+    category = models.CharField(max_length=50, choices=SERVICE_CATEGORIES)
     tags = models.ManyToManyField(Tag, related_name='services', blank=True)
 
     class Meta:

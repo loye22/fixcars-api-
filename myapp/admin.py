@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, CarBrand, ServiceCategory, Tag, Service, SupplierBrandService, Review, Notification, Request
+from .models import User, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request
 
 
 @admin.register(User)
@@ -12,10 +12,7 @@ class CarBrandAdmin(admin.ModelAdmin):
     list_display = ('brand_name', 'brand_photo')
     search_fields = ('brand_name',)
 
-@admin.register(ServiceCategory)
-class ServiceCategoryAdmin(admin.ModelAdmin):
-    list_display = ('category_name',)
-    search_fields = ('category_name',)
+ 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
@@ -27,6 +24,7 @@ class ServiceAdmin(admin.ModelAdmin):
     list_display = ('service_name', 'category', 'service_photo')
     list_filter = ('category',)
     search_fields = ('service_name',)
+    filter_horizontal = ('tags',)
 
 @admin.register(SupplierBrandService)
 class SupplierBrandServiceAdmin(admin.ModelAdmin):
