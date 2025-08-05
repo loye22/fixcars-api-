@@ -9,6 +9,7 @@ import os
 from django.conf import settings
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
+from rest_framework.permissions import AllowAny
 import uuid
 from .models import UserProfile, OTPVerification
 from .utils import generate_otp, send_otp_email
@@ -16,6 +17,8 @@ from django.utils import timezone
 from datetime import timedelta
 import re
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
 
 
 # Create your views here.
@@ -27,6 +30,7 @@ def home(request):
 
 class ClientSignupView(APIView):
     """API endpoint for client registration"""
+    permission_classes = [AllowAny]
     
     def post(self, request):
         django_user = None
@@ -182,45 +186,6 @@ class ClientSignupView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
-
-
-
-
-class SendEmailView(APIView):
-    """Simple API view to send email"""
-    
-    def post(self, request):
-        try:
-            email = request.data.get('email')
-            subject = request.data.get('subject', 'Test Email')
-            message = request.data.get('message', 'This is a test email')
-            
-            if not email:
-                return Response({
-                    'error': 'Email is required'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Send email
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False,
-            )
-            
-            return Response({
-                'success': True,
-                'message': f'Email sent to {email}'
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            return Response({
-                'success': False,
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 class FileUploadView(APIView):
     """API view to upload files and return URL"""
     parser_classes = (MultiPartParser, FormParser)
@@ -287,6 +252,8 @@ class FileUploadView(APIView):
 
 class OTPValidationView(APIView):
     """API endpoint to validate OTP for user verification"""
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         from django.utils import timezone
         user_id = request.data.get('user_id')
@@ -295,36 +262,33 @@ class OTPValidationView(APIView):
         if not user_id or not otp:
             return Response({
                 "status": "error",
-                "message": "Both user_id and otp are required."
+                "message": "user_id and otp are required"
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            # Find the user profile
             from .models import UserProfile, OTPVerification
             try:
                 user = UserProfile.objects.get(user_id=user_id)
             except UserProfile.DoesNotExist:
                 return Response({
                     "status": "error",
-                    "message": "User not found."
+                    "message": "Invalid or expired OTP"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            # Find the OTPVerification record
             otp_record = OTPVerification.objects.filter(user=user, otp=otp).order_by('-created_at').first()
             if not otp_record:
                 return Response({
                     "status": "error",
-                    "message": "OTP code is incorrect."
+                    "message": "Invalid or expired OTP"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            if otp_record.is_used:
+            # Check if OTP is valid
+            if otp_record.is_used or otp_record.expires_at < timezone.now():
                 return Response({
                     "status": "error",
-                    "message": "OTP code has already been used."
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            if otp_record.expires_at < timezone.now():
-                return Response({
-                    "status": "error",
-                    "message": "OTP code has expired."
+                    "message": "Invalid or expired OTP"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # Mark OTP as used
@@ -349,6 +313,8 @@ class OTPValidationView(APIView):
 
 class ResendOTPView(APIView):
     """API endpoint to resend OTP for user verification"""
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         from django.utils import timezone
         from datetime import timedelta
@@ -430,4 +396,88 @@ class ResendOTPView(APIView):
             return Response({
                 "status": "error",
                 "message": f"An error occurred: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class LoginView(APIView):
+    """API endpoint for user login"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        # Validate required fields
+        if not email or not password:
+            return Response({
+                'success': False,
+                'message': 'Email and password are required.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Authenticate user with Django's auth system
+            django_user = authenticate(username=email, password=password)
+            
+            if not django_user:
+                return Response({
+                    'success': False,
+                    'message': 'Invalid email or password.'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # Get the associated UserProfile
+            try:
+                user_profile = UserProfile.objects.get(django_user=django_user)
+            except UserProfile.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'message': 'User profile not found.'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check account status
+            if user_profile.account_status != 'active':
+                return Response({
+                    'success': False,
+                    'message': 'Account is suspended. Please contact support.'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Check approval status
+            if user_profile.approval_status != 'approved':
+                if user_profile.approval_status == 'pending':
+                    return Response({
+                        'success': False,
+                        'message': 'Account is pending approval. Please wait for admin approval.'
+                    }, status=status.HTTP_403_FORBIDDEN)
+                elif user_profile.approval_status == 'rejected':
+                    return Response({
+                        'success': False,
+                        'message': 'Account has been rejected. Please contact support.'
+                    }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Generate or get existing token
+            token, created = Token.objects.get_or_create(user=django_user)
+            
+            # Prepare user data
+            user_data = {
+                'user_id': str(user_profile.user_id),
+                'full_name': user_profile.full_name,
+                'email': user_profile.email,
+                'phone': user_profile.phone,
+                'profile_photo': user_profile.profile_photo,
+                'user_type': user_profile.user_type,
+                'approval_status': user_profile.approval_status,
+                'account_status': user_profile.account_status,
+                'created_at': user_profile.created_at.isoformat()
+            }
+            
+            return Response({
+                'success': True,
+                'message': 'Login successful',
+                'token': token.key,
+                'user': user_data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': f'An error occurred during login: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
