@@ -137,3 +137,6 @@ DEFAULT_FROM_EMAIL = 'noreply@fixcars.ro'
 # if DEBUG:
 #     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+# Media files configuration
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

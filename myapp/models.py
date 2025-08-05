@@ -1,7 +1,7 @@
 from django.db import models
 import uuid
 from multiselectfield import MultiSelectField
-
+from django.utils import timezone
 
 # Choices for enumerated fields
 USER_TYPES = (
@@ -82,7 +82,7 @@ SERVICE_CATEGORIES = (
     ('tuning_auto', 'Tuning Auto'),
 )
 
-class User(models.Model):
+class UserProfile(models.Model):
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     full_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
@@ -102,7 +102,7 @@ class User(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'users'
+        db_table = 'user_profiles'
 
     def __str__(self):
         return self.full_name
@@ -144,7 +144,7 @@ class Service(models.Model):
 
 class SupplierBrandService(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    supplier = models.ForeignKey(User, on_delete=models.CASCADE, related_name='supplier_services')
+    supplier = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='supplier_services')
     brand = models.ForeignKey(CarBrand, on_delete=models.CASCADE, related_name='brand_services')
     services = models.ManyToManyField(Service, related_name='supplier_brand_services')
     city = models.CharField(max_length=50, choices=ROMANIAN_CITIES, blank=True, null=True)
@@ -163,8 +163,8 @@ class SupplierBrandService(models.Model):
 
 class Review(models.Model):
     review_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='client_reviews')
-    supplier = models.ForeignKey(User, on_delete=models.CASCADE, related_name='supplier_reviews')
+    client = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='client_reviews')
+    supplier = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='supplier_reviews')
     rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
     comment = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -177,8 +177,8 @@ class Review(models.Model):
 
 class Notification(models.Model):
     notification_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
-    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_notifications')
+    sender = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='sent_notifications')
+    receiver = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='received_notifications')
     type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
     message = models.TextField()
     is_read = models.BooleanField(default=False)
@@ -194,8 +194,8 @@ class Notification(models.Model):
 
 class Request(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    client = models.ForeignKey(User, on_delete=models.CASCADE, related_name='client_requests')
-    supplier = models.ForeignKey(User, on_delete=models.CASCADE, related_name='supplier_requests')
+    client = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='client_requests')
+    supplier = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='supplier_requests')
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     status = models.CharField(max_length=20, choices=REQUEST_STATUSES)
@@ -208,3 +208,19 @@ class Request(models.Model):
 
     def __str__(self):
         return f"Request from {self.client.full_name} to {self.supplier.full_name}"
+
+
+
+
+class OTPVerification(models.Model):
+    user = models.ForeignKey('UserProfile', on_delete=models.CASCADE, related_name='otp_verifications')
+    otp = models.CharField(max_length=6)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'otp_verifications'
+
+    def __str__(self):
+        return f"OTP for {self.user.email}"
