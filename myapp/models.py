@@ -2,6 +2,7 @@ from django.db import models
 import uuid
 from multiselectfield import MultiSelectField
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 # Choices for enumerated fields
 USER_TYPES = (
@@ -84,6 +85,7 @@ SERVICE_CATEGORIES = (
 
 class UserProfile(models.Model):
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    django_user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_profile', null=True, blank=True)
     full_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, unique=True)
