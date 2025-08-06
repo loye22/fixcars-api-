@@ -11,7 +11,7 @@ def generate_otp(length=6):
     return ''.join(random.choices(string.digits, k=length))
 
 
-def send_otp_email(email, otp, subject="Your OTP Code"):
+def send_otp_email(email, otp, subject="Codul tău de verificare FixCars"):
     """Send OTP via email"""
     try:
         # HTML template for the email
@@ -31,11 +31,11 @@ def send_otp_email(email, otp, subject="Your OTP Code"):
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>FixCars Verification</h1>
+                    <h1>FixCars.ro - Verificare</h1>
                 </div>
                 <div class="content">
-                    <h2>Welcome to FixCars!</h2>
-                    <p>Thank you for creating your account with FixCars. To complete your registration, please use the verification code below:</p>
+                    <h2>Bun venit la FixCars!</h2>
+                    <p>Mulțumim că ți-ai creat contul pe FixCars.ro. Pentru a-ți finaliza înregistrarea, te rugăm să folosești codul de verificare de mai jos:</p>
                     
                     <div class="otp-code">
                         {otp}
@@ -43,22 +43,22 @@ def send_otp_email(email, otp, subject="Your OTP Code"):
                     
                     <p><strong>Important:</strong></p>
                     <ul>
-                        <li>This code will expire in 10 minutes</li>
-                        <li>Do not share this code with anyone</li>
-                        <li>If you didn't request this code, please ignore this email</li>
+                        <li>Acest cod va expira în 10 minute</li>
+                        <li>Nu împărtăși acest cod cu nimeni</li>
+                        <li>Dacă nu ai solicitat acest cod, te rugăm să ignori acest email</li>
                     </ul>
                     
                     <div class="warning">
-                        <strong>Security Notice:</strong> FixCars will never ask for your verification code via phone call or text message.
+                        <strong>Notă de securitate:</strong> FixCars.ro nu va cere niciodată codul tău de verificare prin apel telefonic sau mesaj text.
                     </div>
                     
-                    <p>Once verified, you'll be able to access all FixCars features and connect with automotive service providers in your area.</p>
+                    <p>După verificare, vei putea accesa toate funcționalitățile FixCars și să te conectezi cu furnizorii de servicii auto din zona ta.</p>
                     
-                    <p>Best regards,<br>The FixCars Team</p>
+                    <p>Cu stimă,<br>Echipa FixCars.ro</p>
                 </div>
                 <div class="footer">
-                    <p>This is an automated message. Please do not reply to this email.</p>
-                    <p>&copy; 2024 FixCars. All rights reserved.</p>
+                    <p>Acesta este un mesaj automat. Te rugăm să nu răspunzi la acest email.</p>
+                    <p>&copy; 2024 FixCars.ro. Toate drepturile rezervate.</p>
                 </div>
             </div>
         </body>
@@ -67,27 +67,27 @@ def send_otp_email(email, otp, subject="Your OTP Code"):
         
         # Plain text version
         plain_message = f"""
-Welcome to FixCars!
+Bun venit la FixCars!
 
-Thank you for creating your account with FixCars. To complete your registration, please use the verification code below:
+Mulțumim că ți-ai creat contul pe FixCars.ro. Pentru a-ți finaliza înregistrarea, te rugăm să folosești codul de verificare de mai jos:
 
 {otp}
 
 Important:
-- This code will expire in 10 minutes
-- Do not share this code with anyone
-- If you didn't request this code, please ignore this email
+- Acest cod va expira în 10 minute
+- Nu împărtăși acest cod cu nimeni
+- Dacă nu ai solicitat acest cod, te rugăm să ignori acest email
 
-Security Notice: FixCars will never ask for your verification code via phone call or text message.
+Notă de securitate: FixCars.ro nu va cere niciodată codul tău de verificare prin apel telefonic sau mesaj text.
 
-Once verified, you'll be able to access all FixCars features and connect with automotive service providers in your area.
+După verificare, vei putea accesa toate funcționalitățile FixCars și să te conectezi cu furnizorii de servicii auto din zona ta.
 
-Best regards,
-The FixCars Team
+Cu stimă,
+Echipa FixCars.ro
 
 ---
-This is an automated message. Please do not reply to this email.
-© 2024 FixCars. All rights reserved.
+Acesta este un mesaj automat. Te rugăm să nu răspunzi la acest email.
+© 2024 FixCars.ro. Toate drepturile rezervate.
         """
         
         # Send email
@@ -108,14 +108,14 @@ This is an automated message. Please do not reply to this email.
 def send_welcome_email(email, user_name):
     """Send welcome email to new users"""
     try:
-        subject = "Welcome to FixCars!"
+        subject = "Bun venit la FixCars.ro!"
         html_message = f"""
         <html>
         <body>
-            <h2>Welcome to FixCars!</h2>
-            <p>Hello {user_name},</p>
-            <p>Thank you for joining FixCars. We're excited to have you on board!</p>
-            <p>Best regards,<br>The FixCars Team</p>
+            <h2>Bun venit la FixCars.ro!</h2>
+            <p>Salut {user_name},</p>
+            <p>Mulțumim că te-ai alăturat FixCars.ro. Suntem încântați să te avem cu noi!</p>
+            <p>Cu stimă,<br>Echipa FixCars.ro</p>
         </body>
         </html>
         """

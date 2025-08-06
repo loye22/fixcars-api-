@@ -34,6 +34,16 @@ ROMANIAN_CITIES = (
     ('Oradea', 'Oradea'),
 )
 
+SECTORS = (
+    ('sector_1', 'Sector 1'),
+    ('sector_2', 'Sector 2'),
+    ('sector_3', 'Sector 3'),
+    ('sector_4', 'Sector 4'),
+    ('sector_5', 'Sector 5'),
+    ('sector_6', 'Sector 6'),
+    ('no_sector', 'No Sector'),
+)
+
 NOTIFICATION_TYPES = (
     ('appointment_reminder', 'Appointment Reminder'),
     ('new_message', 'New Message'),
@@ -93,7 +103,7 @@ class UserProfile(models.Model):
     user_type = models.CharField(max_length=20, choices=USER_TYPES)
     business_address = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=50, choices=ROMANIAN_CITIES, blank=True, null=True)
-    sector = models.CharField(max_length=50, blank=True, null=True)
+    sector = models.CharField(max_length=20, choices=SECTORS, blank=True, null=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
@@ -101,6 +111,8 @@ class UserProfile(models.Model):
     availability_times = MultiSelectField(choices=TIME_SLOTS, blank=True, null=True)
     approval_status = models.CharField(max_length=20, choices=APPROVAL_STATUSES, default='pending')
     account_status = models.CharField(max_length=20, choices=ACCOUNT_STATUSES, default='active')
+    is_active = models.BooleanField(default=True)
+    is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -150,7 +162,7 @@ class SupplierBrandService(models.Model):
     brand = models.ForeignKey(CarBrand, on_delete=models.CASCADE, related_name='brand_services')
     services = models.ManyToManyField(Service, related_name='supplier_brand_services')
     city = models.CharField(max_length=50, choices=ROMANIAN_CITIES, blank=True, null=True)
-    sector = models.CharField(max_length=50, blank=True, null=True)
+    sector = models.CharField(max_length=20, choices=SECTORS, blank=True, null=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     photo_url = models.URLField()  # Required: Stores URL for service photo

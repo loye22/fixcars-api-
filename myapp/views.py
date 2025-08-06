@@ -130,8 +130,8 @@ class ClientSignupView(APIView):
                 phone=phone,
                 profile_photo=photo_url,
                 user_type='client',
-                approval_status='pending',
-                account_status='active'
+                is_active=True,
+                is_verified=False
             )
             
             # Generate 6-digit OTP
@@ -151,7 +151,7 @@ class ClientSignupView(APIView):
             email_sent = send_otp_email(
                 email=email,
                 otp=otp,
-                subject="Your FixCars Verification Code"
+                subject="Codul tău de verificare FixCars.ro"
             )
             
             if not email_sent:
@@ -295,8 +295,9 @@ class OTPValidationView(APIView):
             otp_record.is_used = True
             otp_record.save()
 
-            # Approve the user
+            # Verify the user
             user.approval_status = 'approved'
+            user.is_verified = True
             user.save()
 
             return Response({
@@ -376,7 +377,7 @@ class ResendOTPView(APIView):
             email_sent = send_otp_email(
                 email=user.email,
                 otp=otp,
-                subject="Your FixCars Verification Code (Resent)"
+                subject="Codul tău de verificare FixCars.ro (Retrimis)"
             )
             
             if not email_sent:
@@ -433,25 +434,19 @@ class LoginView(APIView):
                     'message': 'User profile not found.'
                 }, status=status.HTTP_404_NOT_FOUND)
             
-            # Check account status
-            if user_profile.account_status != 'active':
+            # Check if account is active
+            if not user_profile.is_active:
                 return Response({
                     'success': False,
                     'message': 'Account is suspended. Please contact support.'
                 }, status=status.HTTP_403_FORBIDDEN)
             
-            # Check approval status
-            if user_profile.approval_status != 'approved':
-                if user_profile.approval_status == 'pending':
-                    return Response({
-                        'success': False,
-                        'message': 'Account is pending approval. Please wait for admin approval.'
-                    }, status=status.HTTP_403_FORBIDDEN)
-                elif user_profile.approval_status == 'rejected':
-                    return Response({
-                        'success': False,
-                        'message': 'Account has been rejected. Please contact support.'
-                    }, status=status.HTTP_403_FORBIDDEN)
+            # Check if email is verified
+            if not user_profile.is_verified:
+                return Response({
+                    'success': False,
+                    'message': 'Please verify your email address before logging in.'
+                }, status=status.HTTP_403_FORBIDDEN)
             
             # Generate or get existing token
             token, created = Token.objects.get_or_create(user=django_user)
@@ -464,8 +459,8 @@ class LoginView(APIView):
                 'phone': user_profile.phone,
                 'profile_photo': user_profile.profile_photo,
                 'user_type': user_profile.user_type,
-                'approval_status': user_profile.approval_status,
-                'account_status': user_profile.account_status,
+                'is_active': user_profile.is_active,
+                'is_verified': user_profile.is_verified,
                 'created_at': user_profile.created_at.isoformat()
             }
             
