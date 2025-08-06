@@ -1,3 +1,20 @@
+# TODO List 
+
+
+1. *Login Page Verification & Access Token Handling*
+   * On the login page, check if the user's email is verified.
+   * If the email is **not verified**, navigate to the OTP screen for email verification.
+   * If the email is **verified**, proceed to log the user in and **store the access token** securely.
+
+2. Update Image Picker UI
+   * Modify the image picker component to display a **circular avatar** instead of a rectangular image.
+
+3. Implement Home Page for Client
+   * Design and develop the **client's home page** interface with relevant features and layout.
+
+
+
+
 
 
 

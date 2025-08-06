@@ -44,6 +44,17 @@ class ClientSignupView(APIView):
             phone = request.data.get('phone')
             photo_url = request.data.get('photo_url')
             
+            # Check if email already exists but account is not verified yet
+            existing_user = UserProfile.objects.filter(email=email).first()
+            if existing_user and not existing_user.is_verified:
+                return Response({
+                    'success': False,
+                    'error': 'Contul există, dar adresa de email nu este verificată. Te rugăm să te conectezi în schimb',
+                    'user_status': 'unverified',
+                    'user_id': str(existing_user.user_id),
+                    'message': 'Please verify your email or request a new OTP'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
             # Validate required fields
             if not all([full_name, email, password, phone, photo_url]):
                 missing_fields = []
@@ -99,11 +110,15 @@ class ClientSignupView(APIView):
                     'error': 'An account with this email address already exists'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Check if email already exists in UserProfile
-            if UserProfile.objects.filter(email=email).exists():
+            # Check if email already exists in UserProfile (verified users)
+            existing_verified_user = UserProfile.objects.filter(email=email, is_verified=True).first()
+            if existing_verified_user:
                 return Response({
                     'success': False,
-                    'error': 'An account with this email address already exists'
+                    'error': 'An account with this email address already exists',
+                    'user_status': 'verified',
+                    'user_id': str(existing_verified_user.user_id),
+                    'message': 'Please login instead of creating a new account'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Check if phone number already exists
@@ -187,7 +202,10 @@ class ClientSignupView(APIView):
 
 
 class FileUploadView(APIView):
+
     """API view to upload files and return URL"""
+    permission_classes = [AllowAny]
+
     parser_classes = (MultiPartParser, FormParser)
     
     def post(self, request):
@@ -209,7 +227,7 @@ class FileUploadView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Validate file type (optional)
-            allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain']
+            allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain' , 'image/jpg']
             if uploaded_file.content_type not in allowed_types:
                 return Response({
                     'success': False,
