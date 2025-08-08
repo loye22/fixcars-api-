@@ -9,7 +9,7 @@ import os
 from django.conf import settings
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
 from .models import UserProfile, OTPVerification
 from .utils import generate_otp, send_otp_email
@@ -19,6 +19,7 @@ import re
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 # Create your views here.
@@ -430,7 +431,7 @@ class LoginView(APIView):
         if not email or not password:
             return Response({
                 'success': False,
-                'message': 'Email and password are required.'
+                'message':  'Adresa de email și parola sunt obligatorii.' , 
             }, status=status.HTTP_400_BAD_REQUEST)
         
         try:
@@ -440,7 +441,7 @@ class LoginView(APIView):
             if not django_user:
                 return Response({
                     'success': False,
-                    'message': 'Invalid email or password.'
+                    'message': 'Adresă de email sau parolă incorectă.' ,  
                 }, status=status.HTTP_401_UNAUTHORIZED)
             
             # Get the associated UserProfile
@@ -449,25 +450,28 @@ class LoginView(APIView):
             except UserProfile.DoesNotExist:
                 return Response({
                     'success': False,
-                    'message': 'User profile not found.'
+                    'message': 'Contul este suspendat. Vă rugăm să contactați suportul.'
                 }, status=status.HTTP_404_NOT_FOUND)
             
             # Check if account is active
             if not user_profile.is_active:
                 return Response({
                     'success': False,
-                    'message': 'Account is suspended. Please contact support.'
+                    'message':  'Contul este suspendat. Vă rugăm să contactați suportul.'
                 }, status=status.HTTP_403_FORBIDDEN)
             
             # Check if email is verified
             if not user_profile.is_verified:
                 return Response({
                     'success': False,
-                    'message': 'Please verify your email address before logging in.'
+                    'message': 'Vă rugăm să vă verificați adresa de email înainte de autentificare.',
+                    'user_status': 'unverified',
+                    'user_id': str(user_profile.user_id),
+                    'message':'Vă rugăm să verificați emailul sau să solicitați un nou cod OTP'
                 }, status=status.HTTP_403_FORBIDDEN)
             
-            # Generate or get existing token
-            token, created = Token.objects.get_or_create(user=django_user)
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(django_user)
             
             # Prepare user data
             user_data = {
@@ -485,7 +489,8 @@ class LoginView(APIView):
             return Response({
                 'success': True,
                 'message': 'Login successful',
-                'token': token.key,
+                'access_token': str(refresh.access_token),
+                'refresh_token': str(refresh),
                 'user': user_data
             }, status=status.HTTP_200_OK)
             
@@ -494,3 +499,17 @@ class LoginView(APIView):
                 'success': False,
                 'message': f'An error occurred during login: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ProtectedTestView(APIView):
+    """Protected API endpoint for testing authentication"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        return Response({
+            'success': True,
+            'message': 'This is a protected endpoint! You are authenticated.',
+            'user_id': request.user.id,
+            'username': request.user.username,
+            'timestamp': timezone.now().isoformat()
+        }, status=status.HTTP_200_OK)
