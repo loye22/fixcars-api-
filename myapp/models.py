@@ -124,7 +124,7 @@ class UserProfile(models.Model):
 class CarBrand(models.Model):
     brand_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     brand_name = models.CharField(max_length=255, unique=True)
-    brand_photo = models.URLField()  # Required: Stores URL for brand photo
+    brand_photo = models.ImageField(upload_to='brands/', blank=True, null=True)
 
     class Meta:
         db_table = 'car_brands'

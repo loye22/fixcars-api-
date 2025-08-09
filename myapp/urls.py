@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import  home , FileUploadView, ClientSignupView, OTPValidationView, ResendOTPView, LoginView, ProtectedTestView
-from rest_framework_simplejwt.views import TokenRefreshView
+from .views import  home , FileUploadView, ClientSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView
+from rest_framework_simplejwt.views import TokenRefreshView 
 
 app_name = 'myapp'
 
@@ -12,5 +12,5 @@ urlpatterns = [
     path('api/resend-otp/', ResendOTPView.as_view(), name='resend_otp'),
     path('api/login/', LoginView.as_view(), name='login'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/protected-test/', ProtectedTestView.as_view(), name='protected_test'),
+    path('api/brands/', CarBrandListView.as_view(), name='brand_list'),
 ] 

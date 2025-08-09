@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification
+from .models import UserProfile, OTPVerification, CarBrand
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
 from datetime import timedelta
@@ -20,6 +20,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import CarBrandSerializer
 
 
 # Create your views here.
@@ -501,15 +502,13 @@ class LoginView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class ProtectedTestView(APIView):
-    """Protected API endpoint for testing authentication"""
+
+
+class CarBrandListView(APIView):
+    """Public endpoint to list all car brands"""
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
-        return Response({
-            'success': True,
-            'message': 'This is a protected endpoint! You are authenticated.',
-            'user_id': request.user.id,
-            'username': request.user.username,
-            'timestamp': timezone.now().isoformat()
-        }, status=status.HTTP_200_OK)
+        brands_qs = CarBrand.objects.all().order_by('brand_name')
+        serializer = CarBrandSerializer(brands_qs, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
