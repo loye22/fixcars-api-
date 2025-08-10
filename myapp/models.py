@@ -145,8 +145,8 @@ class Tag(models.Model):
 class Service(models.Model):
     service_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     service_name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
-    service_photo = models.URLField()  # Required: Stores URL for service photo
+    description = models.TextField()
+    service_photo = models.ImageField(upload_to='services/')
     category = models.CharField(max_length=50, choices=SERVICE_CATEGORIES)
     tags = models.ManyToManyField(Tag, related_name='services', blank=True)
 
@@ -161,10 +161,11 @@ class SupplierBrandService(models.Model):
     supplier = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='supplier_services')
     brand = models.ForeignKey(CarBrand, on_delete=models.CASCADE, related_name='brand_services')
     services = models.ManyToManyField(Service, related_name='supplier_brand_services')
-    city = models.CharField(max_length=50, choices=ROMANIAN_CITIES, blank=True, null=True)
+    city = models.CharField(max_length=50, choices=ROMANIAN_CITIES)
     sector = models.CharField(max_length=20, choices=SECTORS, blank=True, null=True)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     photo_url = models.URLField()  # Required: Stores URL for service photo
     active = models.BooleanField(default=True)
 

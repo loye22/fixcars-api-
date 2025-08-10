@@ -1,19 +1,36 @@
 from django.contrib import admin
 from .models import UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification
-
+from django.contrib import admin
+from .models import UserProfile
 # Register your models here.
  
-admin.site.register(CarBrand)
+
 admin.site.register(Tag)
-admin.site.register(Service)
-admin.site.register(SupplierBrandService)
 admin.site.register(Review)
 admin.site.register(Notification)
 admin.site.register(Request)
+admin.site.register(CarBrand)
+
    
 
-from django.contrib import admin
-from .models import UserProfile
+@admin.register(SupplierBrandService)
+class SupplierBrandServiceAdmin(admin.ModelAdmin):
+    list_display = ('supplier', 'brand', 'city', 'sector', 'active')
+    search_fields = ('supplier__full_name', 'brand__brand_name')
+    list_filter = ('city', 'sector', 'active')
+    filter_horizontal = ('services',)
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "supplier":
+            kwargs["queryset"] = UserProfile.objects.filter(user_type='supplier')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = ('service_name', 'category', 'service_photo')
+    search_fields = ('service_name',)
+    list_filter = ('category',)
+    filter_horizontal = ('tags',)
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
