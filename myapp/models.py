@@ -66,21 +66,6 @@ REQUEST_STATUSES = (
 )
 
 
-DAYS_OF_WEEK = (
-    ('mon', 'Monday'),
-    ('tue', 'Tuesday'),
-    ('wed', 'Wednesday'),
-    ('thu', 'Thursday'),
-    ('fri', 'Friday'),
-    ('sat', 'Saturday'),
-    ('sun', 'Sunday'),
-)
-
-TIME_SLOTS = (
-    ('morning', 'Morning (09:00-12:00)'),
-    ('afternoon', 'Afternoon (12:00-17:00)'),
-    ('evening', 'Evening (17:00-21:00)'),
-)
 
 SERVICE_CATEGORIES = (
     ('mecanic_auto', 'Mecanic Auto'),
@@ -107,8 +92,6 @@ class UserProfile(models.Model):
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
-    availability_days = MultiSelectField(choices=DAYS_OF_WEEK, blank=True, null=True)
-    availability_times = MultiSelectField(choices=TIME_SLOTS, blank=True, null=True)
     approval_status = models.CharField(max_length=20, choices=APPROVAL_STATUSES, default='pending')
     account_status = models.CharField(max_length=20, choices=ACCOUNT_STATUSES, default='active')
     is_active = models.BooleanField(default=True)
@@ -239,3 +222,43 @@ class OTPVerification(models.Model):
 
     def __str__(self):
         return f"OTP for {self.user.email}"
+
+class BusinessHours(models.Model):
+    supplier = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='business_hours')
+    
+    # Monday to Friday (default open)
+    monday_open = models.TimeField(default='08:00')
+    monday_close = models.TimeField(default='19:00')
+    monday_closed = models.BooleanField(default=False)
+    
+    tuesday_open = models.TimeField(default='08:00')
+    tuesday_close = models.TimeField(default='19:00')
+    tuesday_closed = models.BooleanField(default=False)
+    
+    wednesday_open = models.TimeField(default='08:00')
+    wednesday_close = models.TimeField(default='19:00')
+    wednesday_closed = models.BooleanField(default=False)
+    
+    thursday_open = models.TimeField(default='08:00')
+    thursday_close = models.TimeField(default='19:00')
+    thursday_closed = models.BooleanField(default=False)
+    
+    friday_open = models.TimeField(default='08:00')
+    friday_close = models.TimeField(default='19:00')
+    friday_closed = models.BooleanField(default=False)
+    
+    # Weekend (default closed)
+    saturday_open = models.TimeField(default='09:00')
+    saturday_close = models.TimeField(default='17:00')
+    saturday_closed = models.BooleanField(default=True)
+    
+    sunday_open = models.TimeField(default='09:00')
+    sunday_close = models.TimeField(default='17:00')
+    sunday_closed = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'business_hours'
+        unique_together = ('supplier',)
+
+    def __str__(self):
+        return f"Business Hours for {self.supplier.full_name}"

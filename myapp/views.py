@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification, CarBrand
+from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
 from datetime import timedelta
@@ -20,7 +20,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CarBrandSerializer
+from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer
 
 
 # Create your views here.
@@ -287,7 +287,7 @@ class OTPValidationView(APIView):
 
         try:
             # Find the user profile
-            from .models import UserProfile, OTPVerification
+            from django.utils import timezone
             try:
                 user = UserProfile.objects.get(user_id=user_id)
             except UserProfile.DoesNotExist:
@@ -512,3 +512,18 @@ class CarBrandListView(APIView):
         brands_qs = CarBrand.objects.all().order_by('brand_name')
         serializer = CarBrandSerializer(brands_qs, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class MecanicAutoServicesView(APIView):
+    """API endpoint to get first 30 SupplierBrandService records with mecanic_auto category"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Get SupplierBrandService records where any of the services has category 'mecanic_auto' and active=True
+        qs = SupplierBrandService.objects.filter(
+            services__category='mecanic_auto',
+            active=True
+        ).distinct().order_by('-id')[:30]
+
+        serializer = SupplierBrandServiceSerializer(qs, many=True)
+        return Response(serializer.data)

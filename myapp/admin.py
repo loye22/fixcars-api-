@@ -1,12 +1,11 @@
 from django.contrib import admin
-from .models import UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification
+from .models import UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours
 from django.contrib import admin
 from .models import UserProfile
 # Register your models here.
  
 
 admin.site.register(Tag)
-admin.site.register(Review)
 admin.site.register(Notification)
 admin.site.register(Request)
 admin.site.register(CarBrand)
@@ -74,3 +73,39 @@ class OTPVerificationAdmin(admin.ModelAdmin):
     def user_name(self, obj):
         return obj.user.full_name
     user_name.short_description = 'User Name'
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ('client', 'supplier', 'rating', 'comment', 'created_at')
+    list_filter = ('rating', 'created_at')
+    search_fields = ('client__full_name', 'supplier__full_name', 'comment')
+    readonly_fields = ('created_at',)
+    ordering = ('-created_at',)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "client":
+            kwargs["queryset"] = UserProfile.objects.filter(user_type='client')
+        elif db_field.name == "supplier":
+            kwargs["queryset"] = UserProfile.objects.filter(user_type='supplier')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+@admin.register(BusinessHours)
+class BusinessHoursAdmin(admin.ModelAdmin):
+    list_display = ('supplier',)
+    search_fields = ('supplier__full_name',)
+    
+    fields = (
+        'supplier',
+        ('monday_open', 'monday_close', 'monday_closed'),
+        ('tuesday_open', 'tuesday_close', 'tuesday_closed'),
+        ('wednesday_open', 'wednesday_close', 'wednesday_closed'),
+        ('thursday_open', 'thursday_close', 'thursday_closed'),
+        ('friday_open', 'friday_close', 'friday_closed'),
+        ('saturday_open', 'saturday_close', 'saturday_closed'),
+        ('sunday_open', 'sunday_close', 'sunday_closed'),
+    )
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "supplier":
+            kwargs["queryset"] = UserProfile.objects.filter(user_type='supplier')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
