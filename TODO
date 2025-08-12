@@ -1,13 +1,16 @@
 # TODO List 
 
 
-1. Update Image Picker UI
-   * Modify the image picker component to display a circular avatar instead of a rectangular image.
 
+1. Ensure latitude and longitude are required during user signup so the server can fetch services based on the user’s default location.
+2. Implement reset password functionality.
+3. Implement server down handling feature.
+4. Implement internet down handling feature.
+5. Link the API with supplier services (default route).
+6. Implement location filter.
+7. Implement brand filter.
+8. Implement services filter.
 
-1. Fix the error that occurs sometimes when picking up an image (path error).
-2. Implement reset password logic.
-3. Start building the client app.
 
 
 

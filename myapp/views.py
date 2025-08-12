@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours
+from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
 from datetime import timedelta
@@ -20,7 +20,10 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer
+from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer
+import math
+from decimal import Decimal
+from .models import SERVICE_CATEGORIES
 
 
 # Create your views here.
@@ -515,15 +518,107 @@ class CarBrandListView(APIView):
 
 
 class MecanicAutoServicesView(APIView):
-    """API endpoint to get first 30 SupplierBrandService records with mecanic_auto category"""
+    """API endpoint to get SupplierBrandService records with mecanic_auto category, sorted by distance"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Get lat and lng from query parameters
+        lat = request.query_params.get('lat')
+        lng = request.query_params.get('lng')
+        
+        if not lat or not lng:
+            return Response({
+                'success': False,
+                'error': 'Latitude (lat) and longitude (lng) parameters are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user_lat = Decimal(lat)
+            user_lng = Decimal(lng)
+        except (ValueError, TypeError):
+            return Response({
+                'success': False,
+                'error': 'Invalid latitude or longitude values'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
         # Get SupplierBrandService records where any of the services has category 'mecanic_auto' and active=True
         qs = SupplierBrandService.objects.filter(
             services__category='mecanic_auto',
             active=True
-        ).distinct().order_by('-id')[:30]
-
-        serializer = SupplierBrandServiceSerializer(qs, many=True)
+        ).distinct()
+        
+        # Calculate distance for each record and add it as a property
+        def calculate_distance(service_lat, service_lng):
+            """Calculate distance between two points using Haversine formula (in kilometers)"""
+            # Convert decimal degrees to radians
+            lat1, lon1 = math.radians(float(user_lat)), math.radians(float(user_lng))
+            lat2, lon2 = math.radians(float(service_lat)), math.radians(float(service_lng))
+            
+            # Haversine formula
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
+            a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+            c = 2 * math.asin(math.sqrt(a))
+            
+            # Radius of Earth in kilometers
+            r = 6371
+            return round(r * c, 2)
+        
+        # Add distance to each queryset object
+        for service in qs:
+            service.distance_km = calculate_distance(service.latitude, service.longitude)
+        
+        # Sort by distance (closest first)
+        sorted_services = sorted(qs, key=lambda x: x.distance_km)
+        
+        # Limit to first 30 results
+        limited_services = sorted_services[:30]
+        
+        serializer = SupplierBrandServiceSerializer(limited_services, many=True)
         return Response(serializer.data)
+
+
+class ServicesByCategoryView(APIView):
+    """API endpoint to get all services with a specific category and their tags"""
+    permission_classes = [IsAuthenticated]  # Public endpoint, no authentication required
+
+    def get(self, request):
+        # Get category from query parameters, default to 'mecanic_auto'
+        category = request.query_params.get('category', 'mecanic_auto')
+        
+        # Validate category
+        valid_categories = [choice[0] for choice in SERVICE_CATEGORIES]
+        if category not in valid_categories:
+            return Response({
+                'success': False,
+                'error': f'Invalid category. Valid categories are: {", ".join(valid_categories)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Get all services with the specified category
+            services = Service.objects.filter(category=category).prefetch_related('tags')
+            
+            if not services.exists():
+                return Response({
+                    'success': True,
+                    'message': f'No services found for category: {category}',
+                    'data': [],
+                    'count': 0
+                }, status=status.HTTP_200_OK)
+            
+            # Serialize the services with their tags
+            serializer = ServiceWithTagsSerializer(services, many=True)
+            
+            return Response({
+                'success': True,
+                'message': f'Services retrieved successfully for category: {category}',
+                'data': serializer.data,
+                'count': services.count(),
+                'category': category
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'An error occurred while fetching services: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

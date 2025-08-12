@@ -1,6 +1,11 @@
 from rest_framework import serializers
-from .models import CarBrand, SupplierBrandService, Service, UserProfile, BusinessHours
+from .models import CarBrand, SupplierBrandService, Service, UserProfile, BusinessHours, Tag
 from django.utils import timezone
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ['tag_id', 'tag_name']
 
 class CarBrandSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,7 +19,14 @@ class CarBrandSerializer(serializers.ModelSerializer):
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
-        fields = ['service_name']
+        fields = ['service_id', 'service_name', 'description', 'service_photo', 'category']
+
+class ServiceWithTagsSerializer(serializers.ModelSerializer):
+    tags = TagSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Service
+        fields = ['service_id', 'service_name', 'description', 'service_photo', 'category', 'tags']
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,6 +43,7 @@ class SupplierBrandServiceSerializer(serializers.ModelSerializer):
     is_open = serializers.SerializerMethodField()
     review_score = serializers.SerializerMethodField()
     total_reviews = serializers.SerializerMethodField()
+    distance_km = serializers.SerializerMethodField()
     services = ServiceSerializer(many=True, read_only=True)
 
     class Meta:
@@ -46,6 +59,7 @@ class SupplierBrandServiceSerializer(serializers.ModelSerializer):
             'is_open',
             'review_score',
             'total_reviews',
+            'distance_km',
             'city',
             'sector',
             'latitude',
@@ -93,5 +107,9 @@ class SupplierBrandServiceSerializer(serializers.ModelSerializer):
 
     def get_total_reviews(self, obj):
         return obj.supplier.supplier_reviews.count()
+
+    def get_distance_km(self, obj):
+        """Get the distance in kilometers that was calculated in the view"""
+        return getattr(obj, 'distance_km', None)
 
 
