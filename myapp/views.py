@@ -517,34 +517,70 @@ class CarBrandListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class MecanicAutoServicesView(APIView):
-    """API endpoint to get SupplierBrandService records with mecanic_auto category, sorted by distance"""
+class ServicesView(APIView):
+    """API endpoint to get SupplierBrandService records with specified service category, sorted by distance"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Get lat and lng from query parameters
+        # Get required parameters
+        category = request.query_params.get('category')
+        
+        # Validate required category parameter
+        if not category:
+            return Response({
+                'success': False,
+                'error': 'Category parameter is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate category is in allowed list
+        valid_categories = [choice[0] for choice in SERVICE_CATEGORIES]
+        if category not in valid_categories:
+            return Response({
+                'success': False,
+                'error': f'Invalid category. Valid categories are: {", ".join(valid_categories)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get optional parameters with defaults
         lat = request.query_params.get('lat')
         lng = request.query_params.get('lng')
+        car_brand = request.query_params.get('car_brand', 'all cars')
+        tags = request.query_params.getlist('tags')  # Get list of tags
         
+        # Set default coordinates to center of Bucharest if not provided
         if not lat or not lng:
-            return Response({
-                'success': False,
-                'error': 'Latitude (lat) and longitude (lng) parameters are required'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            # Bucharest center coordinates
+            user_lat = Decimal('44.4268')
+            user_lng = Decimal('26.1025')
+        else:
+            try:
+                user_lat = Decimal(lat)
+                user_lng = Decimal(lng)
+            except (ValueError, TypeError):
+                return Response({
+                    'success': False,
+                    'error': 'Invalid latitude or longitude values'
+                }, status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            user_lat = Decimal(lat)
-            user_lng = Decimal(lng)
-        except (ValueError, TypeError):
-            return Response({
-                'success': False,
-                'error': 'Invalid latitude or longitude values'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Get SupplierBrandService records where any of the services has category 'mecanic_auto' and active=True
+        # Build base queryset
         qs = SupplierBrandService.objects.filter(
-            services__category='mecanic_auto',
+            services__category=category,
             active=True
+        )
+        
+        # Filter by car brand if specified (and not "all cars")
+        if car_brand and car_brand.lower() != 'all cars':
+            qs = qs.filter(brand__brand_name__icontains=car_brand)
+        
+        # Filter by tags if provided
+        if tags:
+            # Filter services that have any of the specified tags
+            qs = qs.filter(services__tags__tag_name__in=tags).distinct()
+        
+        # Prefetch related data for performance
+        qs = qs.prefetch_related(
+            'services__tags',  # Prefetch services and their tags
+            'supplier__business_hours',  # Prefetch business hours for is_open calculation
+            'supplier__supplier_reviews'  # Prefetch reviews for rating calculation
         ).distinct()
         
         # Calculate distance for each record and add it as a property
@@ -575,7 +611,19 @@ class MecanicAutoServicesView(APIView):
         limited_services = sorted_services[:30]
         
         serializer = SupplierBrandServiceSerializer(limited_services, many=True)
-        return Response(serializer.data)
+        return Response({
+            'success': True,
+            'message': f'Services retrieved successfully for category: {category}',
+            'data': serializer.data,
+            'count': len(limited_services),
+            'category': category,
+            'car_brand': car_brand,
+            'tags': tags,
+            'location': {
+                'lat': float(user_lat),
+                'lng': float(user_lng)
+            }
+        })
 
 
 class ServicesByCategoryView(APIView):

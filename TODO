@@ -1,15 +1,29 @@
 # TODO List 
 
+* Update the endpoint `api/services/` to a new path.
+* Update `api/services-by-category/` to support tag-based search or another appropriate method.
+* Link the car brand filter to the services results.
+* Link the tag-based search to the services results.
+* Test the `mechanic_auto` category thoroughly, including distance, tags, and car brand filters.
+* Apply the same testing and linking for all other categories.
+* Implement a reset password functionality.
+* Implement server downtime handling.
+* Implement internet connectivity handling.
+* Implement a location-based filter.
+* Implement a brand filter.
+* Implement a services filter.
+ 
 
 
-1. Ensure latitude and longitude are required during user signup so the server can fetch services based on the user’s default location.
-2. Implement reset password functionality.
-3. Implement server down handling feature.
-4. Implement internet down handling feature.
-5. Link the API with supplier services (default route).
-6. Implement location filter.
-7. Implement brand filter.
-8. Implement services filter.
+
+
+
+
+
+
+
+
+
 
 
 

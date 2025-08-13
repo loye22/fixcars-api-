@@ -44,7 +44,7 @@ class SupplierBrandServiceSerializer(serializers.ModelSerializer):
     review_score = serializers.SerializerMethodField()
     total_reviews = serializers.SerializerMethodField()
     distance_km = serializers.SerializerMethodField()
-    services = ServiceSerializer(many=True, read_only=True)
+    services = ServiceWithTagsSerializer(many=True, read_only=True)
 
     class Meta:
         model = SupplierBrandService
