@@ -24,6 +24,7 @@ from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, Ser
 import math
 from decimal import Decimal
 from .models import SERVICE_CATEGORIES
+from .serializers import SupplierProfileSerializer, ReviewSummarySerializer
 
 
 # Create your views here.
@@ -669,4 +670,150 @@ class ServicesByCategoryView(APIView):
             return Response({
                 'success': False,
                 'error': f'An error occurred while fetching services: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SupplierProfileView(APIView):
+    """API endpoint to fetch complete supplier profile by UUID"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, supplier_id):
+        try:
+            # Get the supplier profile
+            supplier = UserProfile.objects.get(user_id=supplier_id, user_type='supplier')
+        except UserProfile.DoesNotExist:
+            return Response({
+                'code': 404,
+                'success': False,
+                'error': 'Supplier not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching supplier profile: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        try:
+            # Get supplier profile data
+            profile_data = SupplierProfileSerializer(supplier).data
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error serializing supplier profile data: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        try:
+            # Get cover photos (just URLs)
+            cover_photos = [photo.photo_url for photo in supplier.cover_photos.all()]
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching cover photos: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        try:
+            # Get reviews data
+            reviews = supplier.supplier_reviews.all().order_by('-created_at')[:3]
+            total_reviews = supplier.supplier_reviews.count()
+            average_rating = 0
+            if total_reviews > 0:
+                average_rating = sum(review.rating for review in supplier.supplier_reviews.all()) / total_reviews
+            
+            reviews_data = {
+                'totalReviews': total_reviews,
+                'averageRating': round(average_rating, 1),
+                'reviews': ReviewSummarySerializer(reviews, many=True).data
+            }
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching reviews data: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        try:
+            # Get supplier services data
+            supplier_services = SupplierBrandService.objects.filter(
+                supplier=supplier, 
+                active=True
+            ).select_related('brand').prefetch_related('services')
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching supplier services: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        try:
+            # Get unique car brands
+            car_brands = []
+            seen_brands = set()
+            for service in supplier_services:
+                brand = service.brand
+                if brand.brand_id not in seen_brands:
+                    car_brands.append({
+                        'url': str(brand.brand_photo) if brand.brand_photo else '',
+                        'name': brand.brand_name
+                    })
+                    seen_brands.add(brand.brand_id)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error processing car brands data: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        try:
+            # Get unique services
+            services = []
+            seen_services = set()
+            for service in supplier_services:
+                for service_item in service.services.all():
+                    if service_item.service_id not in seen_services:
+                        services.append({
+                            'serviceName': service_item.service_name,
+                            'description': service_item.description
+                        })
+                        seen_services.add(service_item.service_id)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error processing services data: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        try:
+            # Get location and price from first active service (or default values)
+            lat = lng = price = None
+            if supplier_services.exists():
+                first_service = supplier_services.first()
+                lat = float(first_service.latitude)
+                lng = float(first_service.longitude)
+                price = float(first_service.price)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error processing location and price data: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        try:
+            services_data = {
+                'carBrands': car_brands,
+                'services': services,
+                'lat': lat,
+                'lng': lng
+            }
+            
+            # Construct final response
+            response_data = {
+                'userProfile': profile_data,
+                'coverPhotos': cover_photos,
+                'reviews': reviews_data,
+                'services': services_data
+            }
+            
+            return Response({
+                'success': True,
+                'data': response_data
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error constructing final response: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

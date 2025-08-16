@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  home , FileUploadView, ClientSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView
+from .views import  home , FileUploadView, ClientSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView
 from rest_framework_simplejwt.views import TokenRefreshView 
 
 app_name = 'myapp'
@@ -15,4 +15,5 @@ urlpatterns = [
     path('api/brands/', CarBrandListView.as_view(), name='brand_list'),
     path('api/services/', ServicesView.as_view(), name='services'),
     path('api/services-by-category/', ServicesByCategoryView.as_view(), name='services_by_category'), # this end point will give me all the servises by category
+    path('api/supplierProfile/<uuid:supplier_id>/', SupplierProfileView.as_view(), name='supplier_profile'),
 ] 

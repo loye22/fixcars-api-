@@ -85,6 +85,7 @@ class UserProfile(models.Model):
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, unique=True)
     profile_photo = models.URLField()  # Required: Stores URL for profile photo
+    cover_photos = models.ManyToManyField('CoverPhoto', blank=True, related_name='users')
     user_type = models.CharField(max_length=20, choices=USER_TYPES)
     business_address = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=50, choices=ROMANIAN_CITIES, blank=True, null=True)
@@ -103,6 +104,19 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.full_name
+
+
+class CoverPhoto(models.Model):
+    photo_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    photo_url = models.URLField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'cover_photos'
+
+    def __str__(self):
+        return f"Cover photo: {self.photo_url}"
+
 
 class CarBrand(models.Model):
     brand_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

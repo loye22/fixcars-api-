@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours
+from .models import UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours, CoverPhoto
 from django.contrib import admin
 from .models import UserProfile
 # Register your models here.
@@ -9,6 +9,7 @@ admin.site.register(Tag)
 admin.site.register(Notification)
 admin.site.register(Request)
 admin.site.register(CarBrand)
+admin.site.register(CoverPhoto)
 
    
 
@@ -40,6 +41,7 @@ class UserProfileAdmin(admin.ModelAdmin):
     search_fields = ('full_name', 'email', 'phone')
     list_filter = ('user_type', 'city', 'sector', 'approval_status', 'account_status', 'is_active', 'is_verified')
     readonly_fields = ('user_id', 'created_at')
+    filter_horizontal = ('cover_photos',)
 
 
 @admin.register(OTPVerification)

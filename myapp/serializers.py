@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CarBrand, SupplierBrandService, Service, UserProfile, BusinessHours, Tag
+from .models import CarBrand, SupplierBrandService, Service, UserProfile, BusinessHours, Tag, Review, CoverPhoto
 from django.utils import timezone
 
 class TagSerializer(serializers.ModelSerializer):
@@ -111,5 +111,46 @@ class SupplierBrandServiceSerializer(serializers.ModelSerializer):
     def get_distance_km(self, obj):
         """Get the distance in kilometers that was calculated in the view"""
         return getattr(obj, 'distance_km', None)
+
+class SupplierProfileSerializer(serializers.ModelSerializer):
+    """Serializer for supplier profile data (excluding sensitive fields)"""
+    class Meta:
+        model = UserProfile
+        fields = [
+            'user_id', 'full_name', 'email', 'phone', 'profile_photo', 
+            'business_address', 'city', 'sector', 'latitude', 'longitude', 
+            'bio', 'is_active', 'is_verified', 'created_at'
+        ]
+
+class CoverPhotoSerializer(serializers.ModelSerializer):
+    """Serializer for cover photos - returns just the URL"""
+    class Meta:
+        model = CoverPhoto
+        fields = ['photo_url']
+
+class ReviewSummarySerializer(serializers.ModelSerializer):
+    """Serializer for review summary data"""
+    clientName = serializers.CharField(source='client.full_name', read_only=True)
+    
+    class Meta:
+        model = Review
+        fields = ['comment', 'rating', 'clientName', 'created_at']
+
+class CarBrandSummarySerializer(serializers.ModelSerializer):
+    """Serializer for car brand summary in supplier services"""
+    url = serializers.CharField(source='brand_photo', read_only=True)
+    name = serializers.CharField(source='brand_name', read_only=True)
+    
+    class Meta:
+        model = CarBrand
+        fields = ['url', 'name']
+
+class ServiceSummarySerializer(serializers.ModelSerializer):
+    """Serializer for service summary in supplier services"""
+    serviceName = serializers.CharField(source='service_name', read_only=True)
+    
+    class Meta:
+        model = Service
+        fields = ['serviceName', 'description']
 
 
