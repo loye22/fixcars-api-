@@ -153,4 +153,26 @@ class ServiceSummarySerializer(serializers.ModelSerializer):
         model = Service
         fields = ['serviceName', 'description']
 
+class ReviewListSerializer(serializers.ModelSerializer):
+    """Serializer for detailed review data in reviews list"""
+    client_name = serializers.CharField(source='client.full_name', read_only=True)
+    client_photo = serializers.CharField(source='client.profile_photo', read_only=True)
+    supplier_name = serializers.CharField(source='supplier.full_name', read_only=True)
+    supplier_photo = serializers.CharField(source='supplier.profile_photo', read_only=True)
+    supplier_id = serializers.CharField(source='supplier.user_id', read_only=True)
+    
+    class Meta:
+        model = Review
+        fields = [
+            'review_id', 
+            'client_name', 
+            'client_photo', 
+            'supplier_name', 
+            'supplier_photo', 
+            'supplier_id',
+            'rating', 
+            'comment', 
+            'created_at'
+        ]
+
 

@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service
+from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
 from datetime import timedelta
@@ -20,11 +20,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer
+from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer
 import math
 from decimal import Decimal
-from .models import SERVICE_CATEGORIES
-from .serializers import SupplierProfileSerializer, ReviewSummarySerializer
 
 
 # Create your views here.
@@ -816,4 +814,127 @@ class SupplierProfileView(APIView):
             return Response({
                 'success': False,
                 'error': f'Error constructing final response: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ReviewsListView(APIView):
+    """API endpoint to get all reviews for a specific supplier"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, supplier_id):
+        try:
+            supplier = UserProfile.objects.get(user_id=supplier_id, user_type='supplier')
+        except UserProfile.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'Supplier not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            reviews = Review.objects.filter(supplier=supplier).order_by('-created_at')
+            serializer = ReviewListSerializer(reviews, many=True)
+            return Response({
+                'success': True,
+                'message': f'Reviews retrieved successfully for supplier {supplier_id}',
+                'data': serializer.data,
+                'count': reviews.count()
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'An error occurred while fetching reviews: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CreateUpdateReviewView(APIView):
+    """API endpoint to create or update a review for a supplier"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, supplier_id):
+        """Create or update a review for a supplier"""
+        try:
+            # Get the authenticated user's profile
+            client = request.user.user_profile
+            
+            # Validate that the client is not trying to review themselves
+            if str(client.user_id) == supplier_id:
+                return Response({
+                    'success': False,
+                    'error': 'You cannot review yourself'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get the supplier
+            try:
+                supplier = UserProfile.objects.get(user_id=supplier_id, user_type='supplier')
+            except UserProfile.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'error': 'Supplier not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Get review data from request
+            rating = request.data.get('rating')
+            comment = request.data.get('comment', '')
+            
+            # Validate required fields
+            if not rating:
+                return Response({
+                    'success': False,
+                    'error': 'Rating is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate rating range (1-5)
+            try:
+                rating = int(rating)
+                if rating < 1 or rating > 5:
+                    return Response({
+                        'success': False,
+                        'error': 'Rating must be between 1 and 5'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            except (ValueError, TypeError):
+                return Response({
+                    'success': False,
+                    'error': 'Rating must be a valid number'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if review already exists for this client-supplier pair
+            existing_review = Review.objects.filter(
+                client=client,
+                supplier=supplier
+            ).first()
+            
+            if existing_review:
+                # Update existing review
+                existing_review.rating = rating
+                existing_review.comment = comment
+                existing_review.save()
+                
+                serializer = ReviewListSerializer(existing_review)
+                return Response({
+                    'success': True,
+                    'message': 'Review updated successfully',
+                    'data': serializer.data,
+                    'action': 'updated'
+                }, status=status.HTTP_200_OK)
+            else:
+                # Create new review
+                new_review = Review.objects.create(
+                    client=client,
+                    supplier=supplier,
+                    rating=rating,
+                    comment=comment
+                )
+                
+                serializer = ReviewListSerializer(new_review)
+                return Response({
+                    'success': True,
+                    'message': 'Review created successfully',
+                    'data': serializer.data,
+                    'action': 'created'
+                }, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'An error occurred while creating/updating review: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
