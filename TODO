@@ -1,7 +1,20 @@
 # TODO List 
 
-* Update the endpoint `api/services/` to a new path.
-* Update `api/services-by-category/` to support tag-based search or another appropriate method.
+
+
+
+* add the map to your server 
+* add towing widget for the car towing serviese with call and requist help feat 
+* Complete the remaining **Category Services** screens
+* Create the **Chat** screen
+* Implement notfcations using one signal 
+* staring with supplier profile 
+
+
+**Suppler screen**
+* Add a screen that shows a waiting message: " We will contact you soon to verify your business. If you have already completed this step and still see this message, please contact support "
+
+
 * Implement a reset password functionality.
 * Implement server downtime handling.
 * Implement internet connectivity handling.
@@ -11,10 +24,7 @@
 
 
 
-* Finish implementing **Add New Review**
-* Ensure all labels are in **Romanian**
-* Complete the remaining **Category Services** screens
-* Create the **Chat** screen
+
 
 
 
