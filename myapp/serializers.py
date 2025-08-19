@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CarBrand, SupplierBrandService, Service, UserProfile, BusinessHours, Tag, Review, CoverPhoto
+from .models import CarBrand, SupplierBrandService, Service, UserProfile, BusinessHours, Tag, Review, CoverPhoto, Request
 from django.utils import timezone
 
 class TagSerializer(serializers.ModelSerializer):
@@ -38,6 +38,7 @@ class SupplierBrandServiceSerializer(serializers.ModelSerializer):
     supplier_name = serializers.CharField(source='supplier.full_name', read_only=True)
     supplier_photo = serializers.CharField(source='supplier.profile_photo', read_only=True)
     supplier_address = serializers.CharField(source='supplier.business_address', read_only=True)
+    supplier_phone = serializers.CharField(source='supplier.phone', read_only=True)
     brand_name = serializers.CharField(source='brand.brand_name', read_only=True)
     brand_photo = serializers.CharField(source='brand.brand_photo', read_only=True)
     is_open = serializers.SerializerMethodField()
@@ -54,6 +55,7 @@ class SupplierBrandServiceSerializer(serializers.ModelSerializer):
             'supplier_name',
             'supplier_photo',
             'supplier_address',
+            'supplier_phone',
             'brand_name',
             'brand_photo',
             'is_open',
@@ -174,5 +176,11 @@ class ReviewListSerializer(serializers.ModelSerializer):
             'comment', 
             'created_at'
         ]
+
+class RequestCreateSerializer(serializers.ModelSerializer):
+    phone_number = serializers.CharField(required=False)
+    class Meta:
+        model = Request
+        fields = ['supplier', 'longitude', 'latitude', 'phone_number', 'reason']
 
 

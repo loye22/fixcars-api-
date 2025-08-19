@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES
+from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
 from datetime import timedelta
@@ -20,7 +20,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer
+from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer
 import math
 from decimal import Decimal
 
@@ -938,3 +938,36 @@ class CreateUpdateReviewView(APIView):
                 'success': False,
                 'error': f'An error occurred while creating/updating review: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CreateRequestView(APIView):
+    """API endpoint to create a new request for a supplier"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data.copy()
+        supplier_id = data.get('supplier')
+        client_profile = getattr(request.user, 'user_profile', None)
+        if not client_profile:
+            return Response({'success': False, 'error': 'Client profile not found.'}, status=400)
+        if not supplier_id:
+            return Response({'success': False, 'error': 'Supplier ID is required.'}, status=400)
+        # Uniqueness validation in the view
+        if Request.objects.filter(client=client_profile, supplier_id=supplier_id).exists():
+            return Response({'success': False, 'error': 'Ai făcut deja o cerere către acest furnizor. Te rugăm să mai aștepți puțin până te va contacta sau sună-l direct.', 'code': 'duplicate_request'}, status=400)
+        data['status'] = 'pending'
+        data['client'] = client_profile.pk
+        data['phone_number'] = client_profile.phone  # Set phone number from client profile
+        serializer = RequestCreateSerializer(data=data)
+        if serializer.is_valid():
+            request_obj = serializer.save(client=client_profile, status='pending', phone_number=client_profile.phone)
+            # Create notification for the client (receiver is the sender)
+            from .models import Notification
+            Notification.objects.create(
+                receiver=client_profile,
+                type='request_update',
+                message='Cererea ta a fost trimisă cu succes. Te rugăm să aștepți până când platforma va ajunge.'
+            )
+            return Response({'success': True, 'message': 'Cererea a fost creată cu succes.'}, status=201)
+        else:
+            return Response({'success': False, 'errors': serializer.errors}, status=400)

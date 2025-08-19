@@ -45,11 +45,10 @@ SECTORS = (
 )
 
 NOTIFICATION_TYPES = (
-    ('appointment_reminder', 'Appointment Reminder'),
     ('new_message', 'New Message'),
     ('supplier_approval', 'Supplier Approval'),
-    ('subscription_reminder', 'Subscription Reminder'),
-    ('subscription_expiry', 'Subscription Expiry'),
+    ('request_update', 'Request Update'),
+    ('general_notification', 'General Notification'),
 )
 
 SCHEDULE_STATUSES = (
@@ -60,6 +59,7 @@ SCHEDULE_STATUSES = (
 )
 
 REQUEST_STATUSES = (
+    ('pending', 'Pending'),
     ('accepted', 'Accepted'),
     ('rejected', 'Rejected'),
     ('expired', 'Expired'),
@@ -189,7 +189,6 @@ class Review(models.Model):
 
 class Notification(models.Model):
     notification_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sender = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='sent_notifications')
     receiver = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='received_notifications')
     type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
     message = models.TextField()
@@ -200,7 +199,7 @@ class Notification(models.Model):
         db_table = 'notifications'
 
     def __str__(self):
-        return f"Notification {self.type} from {self.sender.full_name} to {self.receiver.full_name}"
+        return f"Notification {self.type} to {self.receiver.full_name}"
 
 
 
@@ -212,8 +211,10 @@ class Request(models.Model):
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     status = models.CharField(max_length=20, choices=REQUEST_STATUSES)
     phone_number = models.CharField(max_length=20)
-    address = models.CharField(max_length=255)
     reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)  
+    created_at = models.DateTimeField(default=timezone.now)
+
 
     class Meta:
         db_table = 'requests'

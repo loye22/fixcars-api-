@@ -3,8 +3,17 @@
 
 
 
-* add the map to your server 
-* add towing widget for the car towing serviese with call and requist help feat 
+ 
+* remove the dublicated servises in the flowing screens 
+/// 
+
+
+* oneSignal notfcation part // to be immplmint later 
+Where the user send new requst in the AAA(platforma) scrren they should send real notfcation one to the suppler and another one for the clint to confurm his requst is been sent 
+
+
+
+
 * Complete the remaining **Category Services** screens
 * Create the **Chat** screen
 * Implement notfcations using one signal 

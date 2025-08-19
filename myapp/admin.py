@@ -7,12 +7,11 @@ from .models import UserProfile
 
 admin.site.register(Tag)
 admin.site.register(Notification)
-admin.site.register(Request)
 admin.site.register(CarBrand)
 admin.site.register(CoverPhoto)
 
    
-
+ 
 @admin.register(SupplierBrandService)
 class SupplierBrandServiceAdmin(admin.ModelAdmin):
     list_display = ('supplier', 'brand', 'city', 'sector', 'active')
@@ -30,7 +29,7 @@ class ServiceAdmin(admin.ModelAdmin):
     list_display = ('service_name', 'category', 'service_photo')
     search_fields = ('service_name',)
     list_filter = ('category',)
-    filter_horizontal = ('tags',)
+    filter_horizontal = ('tags',) 
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -111,3 +110,10 @@ class BusinessHoursAdmin(admin.ModelAdmin):
         if db_field.name == "supplier":
             kwargs["queryset"] = UserProfile.objects.filter(user_type='supplier')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+@admin.register(Request)
+class RequestAdmin(admin.ModelAdmin):
+    list_display = ( 'supplier', 'client', 'longitude', 'latitude', 'phone_number', 'reason', 'status')
+    search_fields = ('supplier__full_name', 'client__full_name', 'phone_number', 'reason')
+    list_filter = ('status', 'created_at')
+    readonly_fields = ('created_at',)
