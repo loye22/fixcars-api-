@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  home , FileUploadView, ClientSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView
+from .views import  home , FileUploadView, ClientSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, NotificationsListView, MarkNotificationReadView
 from rest_framework_simplejwt.views import TokenRefreshView 
 
 app_name = 'myapp'
@@ -19,4 +19,6 @@ urlpatterns = [
     path('api/reviews/<uuid:supplier_id>/', ReviewsListView.as_view(), name='reviews_list'),
     path('api/reviews/<uuid:supplier_id>/create-update/', CreateUpdateReviewView.as_view(), name='create_update_review'),
     path('api/requests/create/', CreateRequestView.as_view(), name='create_request'),
+    path('api/notifications/', NotificationsListView.as_view(), name='notifications_list'),
+    path('api/notifications/mark-read/', MarkNotificationReadView.as_view(), name='notification_mark_read'),
 ] 

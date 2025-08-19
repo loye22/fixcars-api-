@@ -20,7 +20,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer
+from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, NotificationSerializer
 import math
 from decimal import Decimal
 
@@ -971,3 +971,51 @@ class CreateRequestView(APIView):
             return Response({'success': True, 'message': 'Cererea a fost creată cu succes.'}, status=201)
         else:
             return Response({'success': False, 'errors': serializer.errors}, status=400)
+
+
+class NotificationsListView(APIView):
+    """API endpoint to get all notifications for the requesting user"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_profile = getattr(request.user, 'user_profile', None)
+        if not user_profile:
+            return Response({'success': False, 'error': 'User profile not found.'}, status=404)
+        notifications = Notification.objects.filter(receiver=user_profile).order_by('-created_at')
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response({
+            'success': True,
+            'data': serializer.data,
+            'count': notifications.count()
+        }, status=200)
+
+
+class MarkNotificationReadView(APIView):
+    """API endpoint to mark a notification as read by ID"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user_profile = getattr(request.user, 'user_profile', None)
+        if not user_profile:
+            return Response({'success': False, 'error': 'User profile not found.'}, status=404)
+
+        notification_id = request.data.get('notification_id')
+        if not notification_id:
+            return Response({'success': False, 'error': 'notification_id is required.'}, status=400)
+
+        # Validate UUID format
+        try:
+            parsed_uuid = uuid.UUID(str(notification_id))
+        except (ValueError, AttributeError, TypeError):
+            return Response({'success': False, 'error': 'notification_id must be a valid UUID.'}, status=400)
+
+        notification = Notification.objects.filter(notification_id=parsed_uuid, receiver=user_profile).first()
+        if not notification:
+            return Response({'success': False, 'error': 'Notification not found.'}, status=404)
+
+        if not notification.is_read:
+            notification.is_read = True
+            notification.save()
+
+        serializer = NotificationSerializer(notification)
+        return Response({'success': True, 'message': 'Notification marked as read.', 'data': serializer.data}, status=200)

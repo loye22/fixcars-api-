@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CarBrand, SupplierBrandService, Service, UserProfile, BusinessHours, Tag, Review, CoverPhoto, Request
+from .models import CarBrand, SupplierBrandService, Service, UserProfile, BusinessHours, Tag, Review, CoverPhoto, Request, Notification
 from django.utils import timezone
 
 class TagSerializer(serializers.ModelSerializer):
@@ -182,5 +182,16 @@ class RequestCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Request
         fields = ['supplier', 'longitude', 'latitude', 'phone_number', 'reason']
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = [
+            'notification_id',
+            'type',
+            'message',
+            'is_read',
+            'created_at',
+        ]
 
 

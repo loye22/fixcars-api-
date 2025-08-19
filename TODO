@@ -1,67 +1,23 @@
-# TODO List 
+
+
+# TODO List
+
+1.Remove duplicated services and hide the car brands  in the relevant screens.
+2.Create the Chat screen interface and functionality.
+3. add notifcation screen in the clint app 
 
 
 
-
- 
-* remove the dublicated servises in the flowing screens 
-/// 
-
-
-* oneSignal notfcation part // to be immplmint later 
-Where the user send new requst in the AAA(platforma) scrren they should send real notfcation one to the suppler and another one for the clint to confurm his requst is been sent 
-
-
-
-
-* Complete the remaining **Category Services** screens
-* Create the **Chat** screen
-* Implement notfcations using one signal 
-* staring with supplier profile 
-
-
-**Suppler screen**
-* Add a screen that shows a waiting message: " We will contact you soon to verify your business. If you have already completed this step and still see this message, please contact support "
-
-
-* Implement a reset password functionality.
-* Implement server downtime handling.
-* Implement internet connectivity handling.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+4.Add a Supplier Waiting Screen with the message: "We will contact you soon to verify your business. If you have already 
+completed this step and still see this message, please contact support."
+5.Implement Reset Password functionality for users.
+6.Implement Internet Connectivity handling to check for and respond to being offline.
+7.Implement Server Downtime handling to gracefully manage API/backend errors.
+8.Implement OneSignal notifications for the new request flow:
+    *   Send a notification to the supplier when they receive a new request.
+    *   Send a confirmation notification to the client to confirm their request was sent.
+9.Begin work on the Supplier Profile screen.
+10. add app lanch icon 
 
 
 
