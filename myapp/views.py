@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification
+from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
 from datetime import timedelta
@@ -190,6 +190,230 @@ class ClientSignupView(APIView):
                 'user_id': str(user_profile.user_id),
                 'django_user_id': django_user.id,
                 'email': user_profile.email
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            # Cleanup on error
+            if user_profile:
+                user_profile.delete()
+            if django_user:
+                django_user.delete()
+            
+            return Response({
+                'success': False,
+                'error': f'An error occurred during registration: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SupplierSignupView(APIView):
+    """API endpoint for supplier registration"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        django_user = None
+        user_profile = None
+        
+        try:
+            # Extract data from request
+            full_name = request.data.get('full_name')
+            email = request.data.get('email')
+            password = request.data.get('password')
+            phone = request.data.get('phone')
+            photo_url = request.data.get('photo_url')
+            cover_photos_urls = request.data.get('cover_photos_urls', [])  # List of cover photo URLs
+            latitude = request.data.get('latitude')
+            longitude = request.data.get('longitude')
+            bio = request.data.get('bio')
+            business_address = request.data.get('business_address')
+            
+            # Check if email already exists but account is not verified yet
+            existing_user = UserProfile.objects.filter(email=email).first()
+            if existing_user and not existing_user.is_verified:
+                return Response({
+                    'success': False,
+                    'error': 'Contul există, dar adresa de email nu este verificată. Te rugăm să te conectezi în schimb',
+                    'user_status': 'unverified',
+                    'user_id': str(existing_user.user_id),
+                    'message': 'Please verify your email or request a new OTP'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate required fields
+            if not all([full_name, email, password, phone, photo_url, latitude, longitude, business_address, bio]):
+                missing_fields = []
+                if not full_name:
+                    missing_fields.append('full_name')
+                if not email:
+                    missing_fields.append('email')
+                if not password:
+                    missing_fields.append('password')
+                if not phone:
+                    missing_fields.append('phone')
+                if not photo_url:
+                    missing_fields.append('photo_url')
+                if not latitude:
+                    missing_fields.append('latitude')
+                if not longitude:
+                    missing_fields.append('longitude')
+                if not business_address:
+                    missing_fields.append('business_address')
+                if not bio:
+                    missing_fields.append('bio')
+                
+                return Response({
+                    'success': False,
+                    'error': f'Missing required fields: {", ".join(missing_fields)}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate email format
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, email):
+                return Response({
+                    'success': False,
+                    'error': 'Please provide a valid email address'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate phone number format (must start with '07')
+            if not phone.startswith('07'):
+                return Response({
+                    'success': False,
+                    'error': 'Phone number must start with "07"'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate phone number length (should be 10 digits for Romanian numbers)
+            if len(phone) != 10 or not phone.isdigit():
+                return Response({
+                    'success': False,
+                    'error': 'Phone number must be exactly 10 digits'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate password length
+            if len(password) < 8:
+                return Response({
+                    'success': False,
+                    'error': 'Password must be at least 8 characters long'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate cover photos (must have at least 1, maximum 5)
+            if not cover_photos_urls:
+                return Response({
+                    'success': False,
+                    'error': 'At least one cover photo is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if len(cover_photos_urls) > 5:
+                return Response({
+                    'success': False,
+                    'error': 'Maximum 5 cover photos allowed'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate latitude and longitude
+            try:
+                lat = float(latitude)
+                lng = float(longitude)
+                if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+                    return Response({
+                        'success': False,
+                        'error': 'Invalid latitude or longitude values'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            except (ValueError, TypeError):
+                return Response({
+                    'success': False,
+                    'error': 'Latitude and longitude must be valid numbers'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if email already exists in Django User model
+            if User.objects.filter(email=email).exists():
+                return Response({
+                    'success': False,
+                    'error': 'An account with this email address already exists'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if email already exists in UserProfile (verified users)
+            existing_verified_user = UserProfile.objects.filter(email=email, is_verified=True).first()
+            if existing_verified_user:
+                return Response({
+                    'success': False,
+                    'error': 'An account with this email address already exists',
+                    'user_status': 'verified',
+                    'user_id': str(existing_verified_user.user_id),
+                    'message': 'Please login instead of creating a new account'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if phone number already exists
+            if UserProfile.objects.filter(phone=phone).exists():
+                return Response({
+                    'success': False,
+                    'error': 'An account with this phone number already exists'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Create Django User first
+            django_user = User.objects.create_user(
+                username=email,  # Use email as username
+                email=email,
+                password=password,
+                first_name=full_name.split()[0] if full_name else '',
+                last_name=' '.join(full_name.split()[1:]) if len(full_name.split()) > 1 else ''
+            )
+            
+            # Create UserProfile linked to Django User
+            user_profile = UserProfile.objects.create(
+                django_user=django_user,
+                full_name=full_name,
+                email=email,
+                phone=phone,
+                profile_photo=photo_url,
+                user_type='supplier',
+                latitude=lat,
+                longitude=lng,
+                business_address=business_address,
+                bio=bio,
+                is_active=False,  # Default to False for suppliers
+                is_verified=False  # Default to False for suppliers
+            )
+            
+            # Create cover photos and link them to the user profile
+            for cover_photo_url in cover_photos_urls:
+                cover_photo = CoverPhoto.objects.create(photo_url=cover_photo_url)
+                user_profile.cover_photos.add(cover_photo)
+            
+            # Generate 6-digit OTP
+            otp = generate_otp(6)
+            
+            # Set OTP expiration (10 minutes from now)
+            expires_at = timezone.now() + timedelta(minutes=10)
+            
+            # Create OTP record
+            OTPVerification.objects.create(
+                user=user_profile,
+                otp=otp,
+                expires_at=expires_at
+            )
+            
+            # Send OTP email
+            email_sent = send_otp_email(
+                email=email,
+                otp=otp,
+                subject="Codul tău de verificare FixCars.ro - Supplier Account"
+            )
+            
+            if not email_sent:
+                # If email fails, delete both user and profile
+                if user_profile:
+                    user_profile.delete()
+                if django_user:
+                    django_user.delete()
+                return Response({
+                    'success': False,
+                    'error': 'Failed to send verification email. Please try again.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response({
+                'success': True,
+                'message': 'Supplier account created successfully. Please check your email for verification code.',
+                'user_id': str(user_profile.user_id),
+                'django_user_id': django_user.id,
+                'email': user_profile.email,
+                'note': 'Your account is pending approval and will be activated after verification and admin review.'
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
@@ -460,7 +684,8 @@ class LoginView(APIView):
             if not user_profile.is_active:
                 return Response({
                     'success': False,
-                    'message':  'Contul este suspendat. Vă rugăm să contactați suportul.'
+                    'message':  'Vă mulțumim pentru înregistrare! Contul dvs. FixCar a fost creat și așteaptă verificarea echipei noastre, care vă va contacta în următoarele 24 de ore pentru activare; dacă după acest timp nu ați primit niciun semn sau aveți întrebări, ne puteți scrie direct la support@fixcars.ro',
+                    'code': 409
                 }, status=status.HTTP_403_FORBIDDEN)
             
             # Check if email is verified
