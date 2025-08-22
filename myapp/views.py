@@ -371,6 +371,9 @@ class SupplierSignupView(APIView):
                 is_verified=False  # Default to False for suppliers
             )
             
+            # Create default business hours for the supplier
+            BusinessHours.objects.create(supplier=user_profile)
+            
             # Create cover photos and link them to the user profile
             for cover_photo_url in cover_photos_urls:
                 cover_photo = CoverPhoto.objects.create(photo_url=cover_photo_url)
@@ -895,6 +898,123 @@ class ServicesByCategoryView(APIView):
                 'error': f'An error occurred while fetching services: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+class SupplierProfileSummaryView(APIView):
+    """New API endpoint to return supplier profile summary with requested fields"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, supplier_id=None):
+        try:
+            if supplier_id:
+                supplier = UserProfile.objects.get(user_id=supplier_id, user_type='supplier')
+            else:
+                supplier = getattr(request.user, 'user_profile', None)
+                if not supplier or supplier.user_type != 'supplier':
+                    return Response({'success': False, 'error': 'Authenticated user is not a supplier', 'code': 403}, status=status.HTTP_403_FORBIDDEN)
+        except UserProfile.DoesNotExist:
+            return Response({'success': False, 'error': 'Supplier not found', 'code': 404}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Business hours and is_open
+        business_hours_obj = supplier.business_hours.first()
+        business_hours = None
+        is_open = False
+        if business_hours_obj:
+            business_hours = {
+                'monday': {
+                    'open': str(business_hours_obj.monday_open),
+                    'close': str(business_hours_obj.monday_close),
+                    'closed': business_hours_obj.monday_closed,
+                },
+                'tuesday': {
+                    'open': str(business_hours_obj.tuesday_open),
+                    'close': str(business_hours_obj.tuesday_close),
+                    'closed': business_hours_obj.tuesday_closed,
+                },
+                'wednesday': {
+                    'open': str(business_hours_obj.wednesday_open),
+                    'close': str(business_hours_obj.wednesday_close),
+                    'closed': business_hours_obj.wednesday_closed,
+                },
+                'thursday': {
+                    'open': str(business_hours_obj.thursday_open),
+                    'close': str(business_hours_obj.thursday_close),
+                    'closed': business_hours_obj.thursday_closed,
+                },
+                'friday': {
+                    'open': str(business_hours_obj.friday_open),
+                    'close': str(business_hours_obj.friday_close),
+                    'closed': business_hours_obj.friday_closed,
+                },
+                'saturday': {
+                    'open': str(business_hours_obj.saturday_open),
+                    'close': str(business_hours_obj.saturday_close),
+                    'closed': business_hours_obj.saturday_closed,
+                },
+                'sunday': {
+                    'open': str(business_hours_obj.sunday_open),
+                    'close': str(business_hours_obj.sunday_close),
+                    'closed': business_hours_obj.sunday_closed,
+                },
+            }
+
+            try:
+                now = timezone.now()
+                current_day = now.weekday()
+                current_time = now.time()
+                if current_day == 0:
+                    is_open = (not business_hours_obj.monday_closed and business_hours_obj.monday_open <= current_time <= business_hours_obj.monday_close)
+                elif current_day == 1:
+                    is_open = (not business_hours_obj.tuesday_closed and business_hours_obj.tuesday_open <= current_time <= business_hours_obj.tuesday_close)
+                elif current_day == 2:
+                    is_open = (not business_hours_obj.wednesday_closed and business_hours_obj.wednesday_open <= current_time <= business_hours_obj.wednesday_close)
+                elif current_day == 3:
+                    is_open = (not business_hours_obj.thursday_closed and business_hours_obj.thursday_open <= current_time <= business_hours_obj.thursday_close)
+                elif current_day == 4:
+                    is_open = (not business_hours_obj.friday_closed and business_hours_obj.friday_open <= current_time <= business_hours_obj.friday_close)
+                elif current_day == 5:
+                    is_open = (not business_hours_obj.saturday_closed and business_hours_obj.saturday_open <= current_time <= business_hours_obj.saturday_close)
+                elif current_day == 6:
+                    is_open = (not business_hours_obj.sunday_closed and business_hours_obj.sunday_open <= current_time <= business_hours_obj.sunday_close)
+            except Exception:
+                is_open = False
+
+        # Completed requests
+        completed_requests = Request.objects.filter(supplier=supplier, status='completed').count()
+
+        # Reviews stats
+        total_reviews = supplier.supplier_reviews.count()
+        average_rating = 0
+        if total_reviews > 0:
+            average_rating = sum(r.rating for r in supplier.supplier_reviews.all()) / total_reviews
+
+        # Offered services count (distinct services across active SupplierBrandService)
+        offered_services_count = Service.objects.filter(
+            supplier_brand_services__supplier=supplier,
+            supplier_brand_services__active=True
+        ).distinct().count()
+
+        # Newest 5 notifications for this supplier
+        latest_notifications = Notification.objects.filter(receiver=supplier).order_by('-created_at')[:5]
+        notifications_data = NotificationSerializer(latest_notifications, many=True).data
+
+        data = {
+            'supplierId': str(supplier.user_id),
+            'supplierFullName': supplier.full_name,
+            'supplierPhotoUrl': supplier.profile_photo,
+            'isOpen': is_open,
+            'businessHours': business_hours,
+            'completedRequests': completed_requests,
+            'reviews': {
+                'total': total_reviews,
+                'averageRating': round(average_rating, 1) if total_reviews > 0 else 0
+            },
+            'offeredServicesCount': offered_services_count,
+            'notifications': notifications_data,
+        }
+
+        return Response({'success': True, 'data': data}, status=status.HTTP_200_OK)
 
 class SupplierProfileView(APIView):
     """API endpoint to fetch complete supplier profile by UUID"""

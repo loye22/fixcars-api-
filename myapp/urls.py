@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  home , FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, NotificationsListView, MarkNotificationReadView
+from .views import  home , FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, NotificationsListView, MarkNotificationReadView, SupplierProfileSummaryView
 from rest_framework_simplejwt.views import TokenRefreshView 
 
 app_name = 'myapp'
@@ -17,6 +17,8 @@ urlpatterns = [
     path('api/services/', ServicesView.as_view(), name='services'),
     path('api/services-by-category/', ServicesByCategoryView.as_view(), name='services_by_category'), # this end point will give me all the servises by category
     path('api/supplierProfile/<uuid:supplier_id>/', SupplierProfileView.as_view(), name='supplier_profile'),
+    path('api/supplierProfileSummary/', SupplierProfileSummaryView.as_view(), name='supplier_profile_summary_me'),
+    path('api/supplierProfileSummary/<uuid:supplier_id>/', SupplierProfileSummaryView.as_view(), name='supplier_profile_summary'),
     path('api/reviews/<uuid:supplier_id>/', ReviewsListView.as_view(), name='reviews_list'),
     path('api/reviews/<uuid:supplier_id>/create-update/', CreateUpdateReviewView.as_view(), name='create_update_review'),
     path('api/requests/create/', CreateRequestView.as_view(), name='create_request'),

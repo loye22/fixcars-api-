@@ -63,6 +63,7 @@ REQUEST_STATUSES = (
     ('accepted', 'Accepted'),
     ('rejected', 'Rejected'),
     ('expired', 'Expired'),
+    ('completed', 'Completed'),
 )
 
 

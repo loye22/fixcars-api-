@@ -2,7 +2,9 @@
 
 # TODO List
 
-1.Remove duplicated services and hide the car brands  in the relevant screens.
+0. link the supplierSummryprofile with api 
+1. appley read notfcation in funtion i nther server and in the flutter app 
+2. refactor the notfcation widget/notifcation screen  to be  used in the shared folder 
 2.Create the Chat screen interface and functionality.
 3. add notifcation screen in the clint app 
 
