@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto
+from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
 from datetime import timedelta
@@ -21,6 +21,7 @@ from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, NotificationSerializer
+from .onesignal_service import OneSignalService
 import math
 from decimal import Decimal
 
@@ -1364,3 +1365,101 @@ class MarkNotificationReadView(APIView):
 
         serializer = NotificationSerializer(notification)
         return Response({'success': True, 'message': 'Notification marked as read.', 'data': serializer.data}, status=200)
+
+
+class RegisterDeviceView(APIView):
+    """API endpoint to register or update a user device for OneSignal notifications"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        player_id = request.data.get('player_id')
+        
+        if not player_id:
+            return Response({'error': 'player_id required'}, status=400)
+
+        user_profile = request.user.user_profile
+        
+        # First, try to find an existing device for this user
+        existing_device = UserDevice.objects.filter(user=user_profile).first()
+        
+        if existing_device:
+            # Update existing device with new player_id
+            existing_device.player_id = player_id
+            existing_device.is_active = True
+            existing_device.save()
+            created = False
+            device = existing_device
+        else:
+            # Create new device if none exists
+            device = UserDevice.objects.create(
+                user=user_profile,
+                player_id=player_id,
+                is_active=True
+            )
+            created = True
+
+        return Response({
+            'success': True,
+            'message': f'Device {created and "registered" or "updated"} successfully',
+            'action': 'created' if created else 'updated',
+            'device_id': str(device.id)
+        })
+
+
+class SendNotificationView(APIView):
+    """API endpoint to send a notification to a specific user"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        message = request.data.get('message')
+        
+        if not user_id or not message:
+            return Response({'error': 'user_id and message required'}, status=400)
+
+        try:
+            user_profile = UserProfile.objects.get(user_id=user_id)
+            
+            # Check if user has any active devices
+            active_devices = user_profile.devices.filter(is_active=True)
+            device_count = active_devices.count()
+            
+            if device_count == 0:
+                return Response({
+                    'error': 'User has no active devices registered',
+                    'details': 'User must register a device first via /api/register-device/',
+                    'user_id': str(user_id),
+                    'device_count': 0
+                }, status=400)
+            
+            # Get device details for debugging
+            device_info = list(active_devices.values('id', 'player_id', 'is_active', 'created_at'))
+            
+            # Try to send notification
+            success = OneSignalService.send_to_user(user_profile, message)
+            
+            if success:
+                return Response({
+                    'success': True, 
+                    'message': 'Notification sent',
+                    'device_count': device_count,
+                    'devices': device_info
+                })
+            else:
+                return Response({
+                    'error': 'Failed to send notification via OneSignal',
+                    'details': 'OneSignal service returned False. Check OneSignal configuration and logs.',
+                    'user_id': str(user_id),
+                    'device_count': device_count,
+                    'devices': device_info,
+                    'onesignal_app_id': getattr(settings, 'ONESIGNAL_APP_ID', 'Not configured')
+                }, status=500)
+                
+        except UserProfile.DoesNotExist:
+            return Response({'error': 'User not found'}, status=404)
+        except Exception as e:
+            return Response({
+                'error': 'Unexpected error occurred',
+                'details': str(e),
+                'user_id': str(user_id)
+            }, status=500)

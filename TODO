@@ -2,24 +2,32 @@
 
 # TODO List
 
-0. link the supplierSummryprofile with api 
-1. appley read notfcation in funtion i nther server and in the flutter app 
-2. refactor the notfcation widget/notifcation screen  to be  used in the shared folder 
-2.Create the Chat screen interface and functionality.
-3. add notifcation screen in the clint app 
+
+1. **Implement Requests Screen** - Build the main requests interface for users
+2. **Implement Services Manager Screen** - Create CRUD operations (add, modify, delete) for services with flutter UI's
+3. **Create Chat Screen Interface** - Build chat functionality and UI
+4. **Add App Launch Icon** - Create and implement app icon
 
 
+5. **Implement Location Permission Handler** - Handle location deny permissions gracefully
+6. **Add Terms & Conditions** - Include in both Romanian and English languages
 
-4.Add a Supplier Waiting Screen with the message: "We will contact you soon to verify your business. If you have already 
-completed this step and still see this message, please contact support."
-5.Implement Reset Password functionality for users.
-6.Implement Internet Connectivity handling to check for and respond to being offline.
-7.Implement Server Downtime handling to gracefully manage API/backend errors.
-8.Implement OneSignal notifications for the new request flow:
-    *   Send a notification to the supplier when they receive a new request.
-    *   Send a confirmation notification to the client to confirm their request was sent.
-9.Begin work on the Supplier Profile screen.
-10. add app lanch icon 
+
+7. **Create Supplier Waiting Screen and un Activate scrren** - Display message: "We will contact you soon to verify your business. If you have already completed this step and still see this message, please contact support."
+or in case of the the account is been suspended "you account is de activated to actvated again please contact support"
+
+
+8. **Implement Reset Password Functionality** - Allow users to reset their passwords
+
+10. **Implement Internet Connectivity Handling** - Check for offline status and respond appropriately
+11. **Implement Server Downtime Handling** - Gracefully manage API/backend errors
+
+12. **Implement OneSignal Notifications** for the new request flow:
+    - Send notification to supplier when they receive a new request
+    - Send confirmation notification to client when request is sent
+    - Send notification when any updates happen to the request
+    - Send notification when new messages are sent
+
 
 
 

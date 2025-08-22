@@ -278,3 +278,19 @@ class BusinessHours(models.Model):
 
     def __str__(self):
         return f"Business Hours for {self.supplier.full_name}"
+
+
+
+
+# models.py - Add this to your existing models
+class UserDevice(models.Model):
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='devices')
+    player_id = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'user_devices'
+
+    def __str__(self):
+        return f"{self.user.full_name} - {self.player_id}"

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours, CoverPhoto
+from .models import UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours, CoverPhoto, UserDevice
 from django.contrib import admin
 from .models import UserProfile
 # Register your models here.
@@ -123,3 +123,24 @@ class NotificationAdmin(admin.ModelAdmin):
     search_fields = ('receiver__full_name', 'message', 'type')
     list_filter = ('type', 'is_read', 'created_at')
     readonly_fields = ('notification_id', 'created_at')
+
+@admin.register(UserDevice)
+class UserDeviceAdmin(admin.ModelAdmin):
+    list_display = ('user', 'player_id', 'is_active', 'created_at')
+    search_fields = ('user__full_name', 'user__email', 'player_id')
+    list_filter = ('is_active', 'created_at')
+    readonly_fields = ('created_at',)
+    ordering = ('-created_at',)
+    
+    fieldsets = (
+        ('Device Information', {
+            'fields': ('user', 'player_id', 'is_active')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user')

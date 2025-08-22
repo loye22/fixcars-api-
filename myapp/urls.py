@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  home , FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, NotificationsListView, MarkNotificationReadView, SupplierProfileSummaryView
+from .views import  home , FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, NotificationsListView, MarkNotificationReadView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView
 from rest_framework_simplejwt.views import TokenRefreshView 
 
 app_name = 'myapp'
@@ -24,4 +24,6 @@ urlpatterns = [
     path('api/requests/create/', CreateRequestView.as_view(), name='create_request'),
     path('api/notifications/', NotificationsListView.as_view(), name='notifications_list'),
     path('api/notifications/mark-read/', MarkNotificationReadView.as_view(), name='notification_mark_read'),
+    path('api/register-device/', RegisterDeviceView.as_view(), name='register_device'),
+    path('api/send-notification/', SendNotificationView.as_view(), name='send_notification'),
 ] 
