@@ -1298,9 +1298,18 @@ class CreateRequestView(APIView):
             return Response({'success': False, 'error': 'Client profile not found.'}, status=400)
         if not supplier_id:
             return Response({'success': False, 'error': 'Supplier ID is required.'}, status=400)
-        # Uniqueness validation in the view
-        if Request.objects.filter(client=client_profile, supplier_id=supplier_id).exists():
-            return Response({'success': False, 'error': 'Ai făcut deja o cerere către acest furnizor. Te rugăm să mai aștepți puțin până te va contacta sau sună-l direct.', 'code': 'duplicate_request'}, status=400)
+        # Check if there are any non-completed requests to the same supplier
+        existing_requests = Request.objects.filter(
+            client=client_profile, 
+            supplier_id=supplier_id
+        ).exclude(status='completed')
+        
+        if existing_requests.exists():
+            return Response({
+                'success': False, 
+                'error': 'Ai deja o cerere activă către acest furnizor. Te rugăm să aștepți până când cererea anterioară va fi finalizată.', 
+                'code': 'active_request_exists'
+            }, status=400)
         data['status'] = 'pending'
         data['client'] = client_profile.pk
         data['phone_number'] = client_profile.phone  # Set phone number from client profile
