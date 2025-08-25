@@ -24,6 +24,8 @@ from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, Ser
 from .onesignal_service import OneSignalService
 import math
 from decimal import Decimal
+from rest_framework import viewsets
+from firebase_admin import auth as firebase_auth
 
 
 # Create your views here.
@@ -1472,3 +1474,74 @@ class SendNotificationView(APIView):
                 'details': str(e),
                 'user_id': str(user_id)
             }, status=500)
+
+
+class FirebaseTokenViewSet(viewsets.ViewSet):
+    """
+    ViewSet for Firebase token management using CRUD patterns
+    """
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        """
+        GET /api/firebase-token/ - Get user's Firebase token
+        This is the main endpoint the Flutter app will use
+        """
+        try:
+            # Get the actual UUID from UserProfile instead of Django User ID
+            user_profile = request.user.user_profile
+            user_uuid = str(user_profile.user_id) if user_profile else str(request.user.id)
+            
+            custom_token = firebase_auth.create_custom_token(user_uuid)
+            
+            # Get user's profile photo URL
+            try:
+                profile_photo_url = user_profile.profile_photo if user_profile else None
+            except:
+                profile_photo_url = None
+            
+            return Response({
+                'token': custom_token.decode('utf-8') if isinstance(custom_token, (bytes, bytearray)) else str(custom_token),
+                'user_uuid': user_uuid,
+                'email': request.user.email,
+                'display_name': request.user.get_full_name() or request.user.username,
+                'profile_photo_url': profile_photo_url
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to generate Firebase token: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def create(self, request):
+        """
+        POST /api/firebase-token/ - Create a new Firebase token (same as list)
+        """
+        return self.list(request)
+
+    def retrieve(self, request, pk=None):
+        """
+        GET /api/firebase-token/{pk}/ - Not typically used, but follows CRUD pattern
+        """
+        return Response(
+            {'error': 'Use the list endpoint to get your Firebase token'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    def update(self, request, pk=None):
+        """
+        PUT /api/firebase-token/{pk}/ - Not typically used
+        """
+        return Response(
+            {'error': 'Firebase tokens cannot be updated, request a new one'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    def destroy(self, request, pk=None):
+        """
+        DELETE /api/firebase-token/{pk}/ - Not typically used
+        """
+        return Response(
+            {'error': 'Firebase tokens cannot be deleted through this API'},
+            status=status.HTTP_400_BAD_REQUEST
+        )

@@ -83,3 +83,6 @@ $RECYCLE.BIN/
 # Local env files
 .env
 .env.*
+
+# Firebase service account keys (keep secure!)
+firebase/

@@ -169,3 +169,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # OneSignal Configuration
 ONESIGNAL_APP_ID = 'ac3a9463-87dc-4dda-becd-fb4d0c4382cc'
 ONESIGNAL_REST_API_KEY = 'os_v2_app_vq5jiy4h3rg5vpwn7ngqyq4czrilhe5sjbzumc4p6a5g22voe62b62jv3qhimjb3mxlnfjh4sp7fpdn7geyxo24dzcfdfxd5bg3kacq'  # Replace with your actual REST API key
+
+# Firebase Configuration
+FIREBASE_SERVICE_ACCOUNT_KEY_PATH = BASE_DIR / 'firebase' / 'serviceAccountKey.json'

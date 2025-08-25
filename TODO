@@ -23,7 +23,7 @@ or in case of the the account is been suspended "you account is de activated to 
 11. **Implement Server Downtime Handling** - Gracefully manage API/backend errors
 
 12. **Implement OneSignal Notifications** for the new request flow:
-    - Send notification to supplier when they receive a new request
+    - Send notification to supplier when they receive a new request (DONE)
     - Send confirmation notification to client when request is sent
     - Send notification when any updates happen to the request
     - Send notification when new messages are sent
@@ -31,3 +31,23 @@ or in case of the the account is been suspended "you account is de activated to 
 
 
 
+conversations/{conversationId}/
+  ├── participants: [userUUID1, userUUID2, ...]  # Array of participant UUIDs
+  ├── last_message: {                             # Last message for preview
+  │     ├── content: "Hello there!"
+  │     ├── sender_id: "userUUID1"
+  │     ├── timestamp: January 1, 2024 at 12:00:00 PM UTC-7
+  │     └── type: "text"
+  │   }
+  ├── created_at: January 1, 2024 at 12:00:00 PM UTC-7
+  └── updated_at: January 1, 2024 at 12:00:00 PM UTC-7
+
+conversations/{conversationId}/messages/{messageId}/
+  ├── sender_id: "userUUID1"                      # Sender's UUID from Django
+  ├── sender_name: "John Doe"                     # Sender's display name
+  ├── sender_photo_url: "https://..."             # Sender's profile photo
+  ├── content: "Hello there!"                     # Message content
+  ├── type: "text"                                # text, image, voice
+  ├── media_url: "https://..."                    # URL for image/voice files
+  ├── timestamp: January 1, 2024 at 12:00:00 PM UTC-7
+  └── status: "sent"                              # sent, delivered, read
