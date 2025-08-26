@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  home , FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, NotificationsListView, MarkNotificationReadView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView
+from .views import  home , FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, NotificationsListView, MarkNotificationReadView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView
 from rest_framework_simplejwt.views import TokenRefreshView 
 from .views import FirebaseTokenViewSet
 
@@ -30,4 +30,5 @@ urlpatterns = [
     path('api/register-device/', RegisterDeviceView.as_view(), name='register_device'),
     path('api/send-notification/', SendNotificationView.as_view(), name='send_notification'),
     path('api/firebase-token/', firebase_token_view, name='firebase_token'),
+    path('api/user/<uuid:user_uuid>/', UserDetailView.as_view(), name='user_detail'),
 ] 

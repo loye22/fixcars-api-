@@ -1545,3 +1545,23 @@ class FirebaseTokenViewSet(viewsets.ViewSet):
             {'error': 'Firebase tokens cannot be deleted through this API'},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class UserDetailView(APIView):
+    """Public endpoint to fetch basic user info by UUID"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_uuid):
+        try:
+            user = UserProfile.objects.get(user_id=user_uuid)
+        except UserProfile.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({
+            'success': True,
+            'display_name': user.full_name,
+            'profile_photo_url': user.profile_photo
+        }, status=status.HTTP_200_OK)
