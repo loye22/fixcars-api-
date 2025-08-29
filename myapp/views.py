@@ -1326,6 +1326,15 @@ class CreateRequestView(APIView):
                 type='request_update',
                 message='Cererea ta a fost trimisă cu succes. Te rugăm să aștepți până când platforma va ajunge.'
             )
+            # Create notification for the supplier (new request received)
+            try:
+                Notification.objects.create(
+                    receiver=request_obj.supplier,
+                    type='request_update',
+                    message='Ai primit o cerere nouă de la un client.'
+                )
+            except Exception:
+                pass
             return Response({'success': True, 'message': 'Cererea a fost creată cu succes.'}, status=201)
         else:
             return Response({'success': False, 'errors': serializer.errors}, status=400)
@@ -1463,6 +1472,11 @@ class UpdateRequestStatusView(APIView):
             Notification.objects.create(receiver=req.client, type='request_update', message=message)
             if req.client_id != req.supplier_id:
                 Notification.objects.create(receiver=req.supplier, type='request_update', message=message)
+            # Send OneSignal push to client (best-effort)
+            try:
+                OneSignalService.send_to_user(req.client, message)
+            except Exception:
+                pass
         except Exception:
             # Notifications are best-effort; do not fail the request
             pass
