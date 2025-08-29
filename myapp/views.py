@@ -12,6 +12,7 @@ from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
 from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice
+from django.db import models
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
 from datetime import timedelta
@@ -20,7 +21,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, NotificationSerializer
+from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer
 from .onesignal_service import OneSignalService
 import math
 from decimal import Decimal
@@ -1329,6 +1330,147 @@ class CreateRequestView(APIView):
         else:
             return Response({'success': False, 'errors': serializer.errors}, status=400)
 
+
+class RequestListView(APIView):
+    """API endpoint to get all requests for the current user sorted by date (newest first)"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            # Get the current user's profile
+            user_profile = getattr(request.user, 'user_profile', None)
+            if not user_profile:
+                return Response({
+                    'success': False,
+                    'error': 'User profile not found.'
+                }, status=404)
+            
+            # Get requests for the current user (both as client and supplier)
+            user_requests = Request.objects.filter(
+                models.Q(client=user_profile) | models.Q(supplier=user_profile)
+            ).order_by('-created_at')
+            
+            if not user_requests.exists():
+                return Response({
+                    'success': True,
+                    'message': 'No requests found for this user',
+                    'data': [],
+                    'count': 0
+                }, status=200)
+            
+            serializer = RequestListSerializer(user_requests, many=True)
+            return Response({
+                'success': True,
+                'message': 'User requests retrieved successfully',
+                'data': serializer.data,
+                'count': user_requests.count()
+            }, status=200)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'An error occurred while fetching user requests: {str(e)}'
+            }, status=500)
+
+
+class PendingRequestsCountView(APIView):
+    """Return number of pending requests for current user (as client or supplier)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            user_profile = getattr(request.user, 'user_profile', None)
+            if not user_profile:
+                return Response({'success': False, 'error': 'User profile not found.'}, status=404)
+
+            count = Request.objects.filter(
+                (models.Q(client=user_profile) | models.Q(supplier=user_profile)) & models.Q(status='pending')
+            ).count()
+
+            return Response({'success': True, 'pending_count': count}, status=200)
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=500)
+
+
+class UpdateRequestStatusView(APIView):
+    """Update a request status enforcing allowed status flow.
+
+    Flow:
+    - pending -> accepted | rejected
+    - accepted -> completed | expired
+    - rejected -> (terminal, no further changes)
+    - completed/expired -> (terminal)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        request_id = request.data.get('request_id')
+        new_status = request.data.get('status')
+
+        if not request_id or not new_status:
+            return Response({'success': False, 'error': 'request_id and status are required.'}, status=400)
+
+        # Validate UUID
+        try:
+            parsed_uuid = uuid.UUID(str(request_id))
+        except (ValueError, AttributeError, TypeError):
+            return Response({'success': False, 'error': 'request_id must be a valid UUID.'}, status=400)
+
+        # Validate status choice
+        valid_statuses = {choice[0] for choice in Request._meta.get_field('status').choices}
+        if new_status not in valid_statuses:
+            return Response({'success': False, 'error': f'Invalid status. Allowed: {", ".join(sorted(valid_statuses))}'}, status=400)
+
+        req = Request.objects.filter(id=parsed_uuid).first()
+        if not req:
+            return Response({'success': False, 'error': 'Request not found.'}, status=404)
+
+        # Ensure the current user is either the client or supplier of this request
+        user_profile = getattr(request.user, 'user_profile', None)
+        if not user_profile or (req.client_id != user_profile.pk and req.supplier_id != user_profile.pk):
+            return Response({'success': False, 'error': 'Not authorized to update this request.'}, status=403)
+
+        current_status = req.status
+
+        # Terminal states cannot transition
+        terminal_statuses = {'rejected', 'completed', 'expired'}
+        if current_status in terminal_statuses:
+            if new_status != current_status:
+                return Response({'success': False, 'error': f'Request in status "{current_status}" cannot be changed.'}, status=400)
+            # If same status, just acknowledge
+            return Response({'success': True, 'message': 'No change. Status already set.', 'status': current_status}, status=200)
+
+        # Allowed transitions mapping
+        allowed_transitions = {
+            'pending': {'accepted', 'rejected'},
+            'accepted': {'completed', 'expired'},
+        }
+
+        allowed_next = allowed_transitions.get(current_status, set())
+        if new_status == current_status:
+            return Response({'success': True, 'message': 'No change. Status already set.', 'status': current_status}, status=200)
+
+        if new_status not in allowed_next:
+            return Response({'success': False, 'error': f'Invalid transition: {current_status} -> {new_status}.'}, status=400)
+
+        # Apply change
+        req.status = new_status
+        req.save(update_fields=['status'])
+
+        # Create notifications to both parties
+        try:
+            message = f'Solicitarea ta a fost actualizată la statusul: {new_status}.'
+            Notification.objects.create(receiver=req.client, type='request_update', message=message)
+            if req.client_id != req.supplier_id:
+                Notification.objects.create(receiver=req.supplier, type='request_update', message=message)
+        except Exception:
+            # Notifications are best-effort; do not fail the request
+            pass
+
+        return Response({'success': True, 'message': 'Request status updated successfully.', 'data': {
+            'id': str(req.id),
+            'status': req.status,
+        }}, status=200)
 
 class NotificationsListView(APIView):
     """API endpoint to get all notifications for the requesting user"""

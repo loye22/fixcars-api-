@@ -4,50 +4,51 @@
 
 
 1. **Implement Requests Screen** - Build the main requests interface for users
-2. **Implement Services Manager Screen** - Create CRUD operations (add, modify, delete) for services with flutter UI's
-3. **Create Chat Screen Interface** - Build chat functionality and UI
-4. **Add App Launch Icon** - Create and implement app icon
+2. **Add App Launch Icon** - Create and implement app icon
 
 
-5. **Implement Location Permission Handler** - Handle location deny permissions gracefully
-6. **Add Terms & Conditions** - Include in both Romanian and English languages
+3. **Implement Location Permission Handler** - Handle location deny permissions gracefully
+4. **Add Terms & Conditions** - Include in both Romanian and English languages
 
 
-7. **Create Supplier Waiting Screen and un Activate scrren** - Display message: "We will contact you soon to verify your business. If you have already completed this step and still see this message, please contact support."
+5. **Create Supplier Waiting Screen and un Activate scrren** - Display message: "We will contact you soon to verify your business. If you have already completed this step and still see this message, please contact support."
 or in case of the the account is been suspended "you account is de activated to actvated again please contact support"
 
 
-8. **Implement Reset Password Functionality** - Allow users to reset their passwords
+6. **Implement Reset Password Functionality** - Allow users to reset their passwords
 
-10. **Implement Internet Connectivity Handling** - Check for offline status and respond appropriately
-11. **Implement Server Downtime Handling** - Gracefully manage API/backend errors
+7. **Implement Internet Connectivity Handling** - Check for offline status and respond appropriately
+8. **Implement Server Downtime Handling** - Gracefully manage API/backend errors
 
-12. **Implement OneSignal Notifications** for the new request flow:
+9. **Implement OneSignal Notifications** for the new request flow:
     - Send notification to supplier when they receive a new request (DONE)
     - Send confirmation notification to client when request is sent
     - Send notification when any updates happen to the request
-    - Send notification when new messages are sent
 
 
 
 
-conversations/{conversationId}/
-  ├── participants: [userUUID1, userUUID2, ...]  # Array of participant UUIDs
-  ├── last_message: {                             # Last message for preview
-  │     ├── content: "Hello there!"
-  │     ├── sender_id: "userUUID1"
-  │     ├── timestamp: January 1, 2024 at 12:00:00 PM UTC-7
-  │     └── type: "text"
-  │   }
-  ├── created_at: January 1, 2024 at 12:00:00 PM UTC-7
-  └── updated_at: January 1, 2024 at 12:00:00 PM UTC-7
+ 
+**Request system**
 
-conversations/{conversationId}/messages/{messageId}/
-  ├── sender_id: "userUUID1"                      # Sender's UUID from Django
-  ├── sender_name: "John Doe"                     # Sender's display name
-  ├── sender_photo_url: "https://..."             # Sender's profile photo
-  ├── content: "Hello there!"                     # Message content
-  ├── type: "text"                                # text, image, voice
-  ├── media_url: "https://..."                    # URL for image/voice files
-  ├── timestamp: January 1, 2024 at 12:00:00 PM UTC-7
-  └── status: "sent"                              # sent, delivered, read
+1.  **New Request Sent:**
+    *   Send notification to supplier: "New request received. Please check the app."
+    *   Send confirmation to client: "Request sent successfully."
+    *   Send both via OneSignal and Django.
+
+2.  **Supplier Rejects Request:**
+    *   Send notification to client: "Your request was rejected. Please find another supplier."
+
+3.  **Supplier Accepts Request:**
+    *   Send notification to client: "Supplier accepted! Please wait for their arrival."
+
+4.  **Job Completion:**
+    *   Let the supplier mark the request as "Completed" when the job is done.
+
+5.  **1-Hour Time Limit:**
+    *   Automatically expire any request that is not completed within 1 hour.
+
+
+
+
+

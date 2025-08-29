@@ -195,3 +195,31 @@ class NotificationSerializer(serializers.ModelSerializer):
         ]
 
 
+class RequestListSerializer(serializers.ModelSerializer):
+    """Serializer for listing requests with client and supplier information"""
+    client_name = serializers.CharField(source='client.full_name', read_only=True)
+    client_photo = serializers.CharField(source='client.profile_photo', read_only=True)
+    client_id = serializers.CharField(source='client.user_id', read_only=True)
+    supplier_name = serializers.CharField(source='supplier.full_name', read_only=True)
+    supplier_photo = serializers.CharField(source='supplier.profile_photo', read_only=True)
+    supplier_id = serializers.CharField(source='supplier.user_id', read_only=True)
+    
+    class Meta:
+        model = Request
+        fields = [
+            'id',
+            'client_name',
+            'client_photo', 
+            'client_id',
+            'supplier_name',
+            'supplier_photo',
+            'supplier_id',
+            'longitude',
+            'latitude',
+            'status',
+            'phone_number',
+            'reason',
+            'created_at'
+        ]
+
+

@@ -112,10 +112,10 @@ class BusinessHoursAdmin(admin.ModelAdmin):
 
 @admin.register(Request)
 class RequestAdmin(admin.ModelAdmin):
-    list_display = ( 'supplier', 'client', 'longitude', 'latitude', 'phone_number', 'reason', 'status')
+    list_display = ('id', 'supplier', 'client', 'longitude', 'latitude', 'phone_number', 'reason', 'status')
     search_fields = ('supplier__full_name', 'client__full_name', 'phone_number', 'reason')
     list_filter = ('status', 'created_at')
-    readonly_fields = ('created_at',)
+    readonly_fields = ('id', 'created_at')
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):

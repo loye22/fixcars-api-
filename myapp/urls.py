@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  home , FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, NotificationsListView, MarkNotificationReadView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView
+from .views import  home , FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView
 from rest_framework_simplejwt.views import TokenRefreshView 
 from .views import FirebaseTokenViewSet
 
@@ -25,6 +25,9 @@ urlpatterns = [
     path('api/reviews/<uuid:supplier_id>/', ReviewsListView.as_view(), name='reviews_list'),
     path('api/reviews/<uuid:supplier_id>/create-update/', CreateUpdateReviewView.as_view(), name='create_update_review'),
     path('api/requests/create/', CreateRequestView.as_view(), name='create_request'),
+    path('api/requests/', RequestListView.as_view(), name='requests_list'),
+    path('api/requests/pending-count/', PendingRequestsCountView.as_view(), name='pending_requests_count'),
+    path('api/requests/update-status/', UpdateRequestStatusView.as_view(), name='update_request_status'),
     path('api/notifications/', NotificationsListView.as_view(), name='notifications_list'),
     path('api/notifications/mark-read/', MarkNotificationReadView.as_view(), name='notification_mark_read'),
     path('api/register-device/', RegisterDeviceView.as_view(), name='register_device'),
