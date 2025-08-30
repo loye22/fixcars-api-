@@ -1771,3 +1771,562 @@ class UserDetailView(APIView):
             'display_name': user.full_name,
             'profile_photo_url': user.profile_photo
         }, status=status.HTTP_200_OK)
+
+
+class RequestPasswordResetView(APIView):
+    """Request password reset - sends email with reset link"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+            
+            if not email:
+                return Response({
+                    'success': False,
+                    'error': 'Email-ul este obligatoriu'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate email format
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, email):
+                return Response({
+                    'success': False,
+                    'error': 'Formatul email-ului nu este valid'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if user exists
+            try:
+                user_profile = UserProfile.objects.get(email=email)
+            except UserProfile.DoesNotExist:
+                # For security reasons, don't reveal if email exists
+                return Response({
+                    'success': True,
+                    'message': 'Dacă email-ul există în sistem, vei primi un link de resetare a parolei'
+                }, status=status.HTTP_200_OK)
+            
+            # Check if user is active
+            if not user_profile.is_active:
+                return Response({
+                    'success': False,
+                    'error': 'Contul este dezactivat. Contactează suportul pentru asistență.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Generate reset token
+            from .utils import generate_reset_token, send_password_reset_email
+            reset_token = generate_reset_token()
+            
+            # Create password reset token record
+            from .models import PasswordResetToken
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            # Delete any existing tokens for this user
+            PasswordResetToken.objects.filter(user=user_profile, is_used=False).delete()
+            
+            # Create new token
+            reset_token_obj = PasswordResetToken.objects.create(
+                user=user_profile,
+                token=reset_token,
+                expires_at=timezone.now() + timedelta(hours=1)
+            )
+            
+            # Send password reset email
+            email_sent = send_password_reset_email(
+                email=email,
+                reset_token=reset_token,
+                user_name=user_profile.full_name
+            )
+            
+            if email_sent:
+                return Response({
+                    'success': True,
+                    'message': 'Link-ul de resetare a parolei a fost trimis pe email-ul tău'
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'error': 'Nu s-a putut trimite email-ul. Încearcă din nou.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': 'A apărut o eroare. Încearcă din nou.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ResetPasswordView(APIView):
+    """Reset password using token"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        try:
+            token = request.data.get('token')
+            new_password = request.data.get('new_password')
+            
+            if not token or not new_password:
+                return Response({
+                    'success': False,
+                    'error': 'Token-ul și noua parolă sunt obligatorii'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate password strength
+            if len(new_password) < 8:
+                return Response({
+                    'success': False,
+                    'error': 'Parola trebuie să aibă cel puțin 8 caractere'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Find the reset token
+            from .models import PasswordResetToken
+            try:
+                reset_token_obj = PasswordResetToken.objects.get(
+                    token=token,
+                    is_used=False
+                )
+            except PasswordResetToken.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'error': 'Token-ul de resetare este invalid sau a fost deja folosit'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if token is expired
+            if reset_token_obj.is_expired():
+                return Response({
+                    'success': False,
+                    'error': 'Token-ul de resetare a expirat. Solicită unul nou.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get user profile
+            user_profile = reset_token_obj.user
+            
+            # Update Django user password
+            if user_profile.django_user:
+                user_profile.django_user.set_password(new_password)
+                user_profile.django_user.save()
+            
+            # Mark token as used
+            reset_token_obj.is_used = True
+            reset_token_obj.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Parola a fost resetată cu succes. Poți să te conectezi cu noua parolă.'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': 'A apărut o eroare. Încearcă din nou.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def reset_password_page(request):
+    """Simple web page for password reset"""
+    token = request.GET.get('token')
+    
+    if not token:
+        return HttpResponse("""
+        <html>
+        <head>
+            <title>Resetare Parolă - FixCars.ro</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                * { box-sizing: border-box; }
+                body { 
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    margin: 0; 
+                    padding: 20px; 
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .container { 
+                    background: white; 
+                    padding: 40px 30px; 
+                    border-radius: 15px; 
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                    max-width: 400px;
+                    width: 100%;
+                    text-align: center;
+                }
+                .logo { 
+                    font-size: 24px; 
+                    font-weight: bold; 
+                    margin-bottom: 20px;
+                    color: #007bff;
+                }
+                h1 { 
+                    color: #333; 
+                    margin-bottom: 20px;
+                    font-size: 24px;
+                }
+                .error { 
+                    color: #dc3545; 
+                    background: #f8d7da;
+                    border: 1px solid #f5c6cb;
+                    padding: 15px;
+                    border-radius: 8px;
+                    margin: 20px 0;
+                }
+                @media (max-width: 480px) {
+                    body { padding: 15px; }
+                    .container { padding: 30px 20px; }
+                    .logo { font-size: 20px; }
+                    h1 { font-size: 20px; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="logo">🔧 FixCars.ro</div>
+                <h1>Resetare Parolă</h1>
+                <div class="error">Token-ul de resetare lipsește.</div>
+                <p>Te rugăm să folosești link-ul din email-ul de resetare.</p>
+            </div>
+        </body>
+        </html>
+        """)
+    
+    # Check if token is valid
+    from .models import PasswordResetToken
+    try:
+        reset_token_obj = PasswordResetToken.objects.get(token=token, is_used=False)
+        if reset_token_obj.is_expired():
+            return HttpResponse("""
+            <html>
+            <head>
+                <title>Resetare Parolă - FixCars.ro</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    * { box-sizing: border-box; }
+                    body { 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        margin: 0; 
+                        padding: 20px; 
+                        min-height: 100vh;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .container { 
+                        background: white; 
+                        padding: 40px 30px; 
+                        border-radius: 15px; 
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                        max-width: 400px;
+                        width: 100%;
+                        text-align: center;
+                    }
+                    .logo { 
+                        font-size: 24px; 
+                        font-weight: bold; 
+                        margin-bottom: 20px;
+                        color: #007bff;
+                    }
+                    h1 { 
+                        color: #333; 
+                        margin-bottom: 20px;
+                        font-size: 24px;
+                    }
+                    .error { 
+                        color: #dc3545; 
+                        background: #f8d7da;
+                        border: 1px solid #f5c6cb;
+                        padding: 15px;
+                        border-radius: 8px;
+                        margin: 20px 0;
+                    }
+                    @media (max-width: 480px) {
+                        body { padding: 15px; }
+                        .container { padding: 30px 20px; }
+                        .logo { font-size: 20px; }
+                        h1 { font-size: 20px; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="logo">🔧 FixCars.ro</div>
+                    <h1>Resetare Parolă</h1>
+                    <div class="error">Token-ul de resetare a expirat.</div>
+                    <p>Te rugăm să soliciți un nou link de resetare.</p>
+                </div>
+            </body>
+            </html>
+            """)
+    except PasswordResetToken.DoesNotExist:
+        return HttpResponse("""
+        <html>
+        <head>
+            <title>Resetare Parolă - FixCars.ro</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                * { box-sizing: border-box; }
+                body { 
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    margin: 0; 
+                    padding: 20px; 
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .container { 
+                    background: white; 
+                    padding: 40px 30px; 
+                    border-radius: 15px; 
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                    max-width: 400px;
+                    width: 100%;
+                    text-align: center;
+                }
+                .logo { 
+                    font-size: 24px; 
+                    font-weight: bold; 
+                    margin-bottom: 20px;
+                    color: #007bff;
+                }
+                h1 { 
+                    color: #333; 
+                    margin-bottom: 20px;
+                    font-size: 24px;
+                }
+                .error { 
+                    color: #dc3545; 
+                    background: #f8d7da;
+                    border: 1px solid #f5c6cb;
+                    padding: 15px;
+                    border-radius: 8px;
+                    margin: 20px 0;
+                }
+                @media (max-width: 480px) {
+                    body { padding: 15px; }
+                    .container { padding: 30px 20px; }
+                    .logo { font-size: 20px; }
+                    h1 { font-size: 20px; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="logo">🔧 FixCars.ro</div>
+                <h1>Resetare Parolă</h1>
+                <div class="error">Token-ul de resetare este invalid.</div>
+                <p>Te rugăm să folosești link-ul din email-ul de resetare.</p>
+            </div>
+        </body>
+        </html>
+        """)
+    
+    # Valid token - show reset form
+    return HttpResponse(f"""
+    <html>
+    <head>
+        <title>Resetare Parolă - FixCars.ro</title>
+        <style>
+            body {{ 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                margin: 0; 
+                padding: 20px; 
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }}
+            .container {{ 
+                background: white; 
+                padding: 40px; 
+                border-radius: 15px; 
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                max-width: 400px;
+                width: 100%;
+            }}
+            .logo {{ 
+                text-align: center; 
+                font-size: 24px; 
+                font-weight: bold; 
+                margin-bottom: 20px;
+                color: #007bff;
+            }}
+            h1 {{ 
+                text-align: center; 
+                color: #333; 
+                margin-bottom: 30px;
+            }}
+            .form-group {{ 
+                margin-bottom: 20px; 
+            }}
+            label {{ 
+                display: block; 
+                margin-bottom: 8px; 
+                color: #555; 
+                font-weight: 500;
+            }}
+            input[type="password"] {{ 
+                width: 100%; 
+                padding: 12px; 
+                border: 2px solid #e1e5e9; 
+                border-radius: 8px; 
+                font-size: 16px; 
+                box-sizing: border-box;
+                transition: border-color 0.3s;
+            }}
+            input[type="password"]:focus {{ 
+                outline: none; 
+                border-color: #007bff; 
+            }}
+            .btn {{ 
+                width: 100%; 
+                padding: 15px; 
+                background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
+                color: white; 
+                border: none; 
+                border-radius: 8px; 
+                font-size: 16px; 
+                font-weight: 600; 
+                cursor: pointer; 
+                transition: transform 0.2s;
+            }}
+            .btn:hover {{ 
+                transform: translateY(-2px); 
+            }}
+            .btn:disabled {{ 
+                opacity: 0.6; 
+                cursor: not-allowed; 
+                transform: none; 
+            }}
+            .message {{ 
+                margin-top: 20px; 
+                padding: 15px; 
+                border-radius: 8px; 
+                text-align: center; 
+                display: none;
+            }}
+            .success {{ 
+                background-color: #d4edda; 
+                color: #155724; 
+                border: 1px solid #c3e6cb; 
+            }}
+            .error {{ 
+                background-color: #f8d7da; 
+                color: #721c24; 
+                border: 1px solid #f5c6cb; 
+            }}
+            .info {{ 
+                background-color: #e3f2fd; 
+                color: #1976d2; 
+                border: 1px solid #bbdefb; 
+                margin-bottom: 20px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="logo">🔧 FixCars.ro</div>
+            <h1>Resetare Parolă</h1>
+            
+            <div class="info">
+                <strong>⏰ Important:</strong> Această pagină va expira în 1 oră din motive de securitate.
+            </div>
+            
+            <form id="resetForm">
+                <div class="form-group">
+                    <label for="newPassword">Noua Parolă:</label>
+                    <input type="password" id="newPassword" name="newPassword" 
+                           placeholder="Introduceți noua parolă (min. 8 caractere)" 
+                           minlength="8" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">Confirmă Parola:</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" 
+                           placeholder="Confirmați noua parolă" 
+                           minlength="8" required>
+                </div>
+                
+                <button type="submit" class="btn" id="submitBtn">
+                    🔐 Resetează Parola
+                </button>
+            </form>
+            
+            <div id="message" class="message"></div>
+        </div>
+
+        <script>
+            const form = document.getElementById('resetForm');
+            const message = document.getElementById('message');
+            const submitBtn = document.getElementById('submitBtn');
+            const token = '{token}';
+
+            form.addEventListener('submit', async (e) => {{
+                e.preventDefault();
+                
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                // Validate passwords match
+                if (newPassword !== confirmPassword) {{
+                    showMessage('Parolele nu se potrivesc. Încercați din nou.', 'error');
+                    return;
+                }}
+                
+                // Validate password length
+                if (newPassword.length < 8) {{
+                    showMessage('Parola trebuie să aibă cel puțin 8 caractere.', 'error');
+                    return;
+                }}
+                
+                // Disable button and show loading
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Se procesează...';
+                
+                try {{
+                    const response = await fetch('/api/password-reset/reset/', {{
+                        method: 'POST',
+                        headers: {{
+                            'Content-Type': 'application/json',
+                        }},
+                        body: JSON.stringify({{
+                            token: token,
+                            new_password: newPassword
+                        }})
+                    }});
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {{
+                        showMessage('✅ Parola a fost resetată cu succes! Poți să te conectezi cu noua parolă.', 'success');
+                        form.reset();
+                    }} else {{
+                        showMessage('❌ ' + data.error, 'error');
+                    }}
+                }} catch (error) {{
+                    showMessage('❌ A apărut o eroare. Încercați din nou.', 'error');
+                }} finally {{
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '🔐 Resetează Parola';
+                }}
+            }});
+            
+            function showMessage(text, type) {{
+                message.textContent = text;
+                message.className = 'message ' + type;
+                message.style.display = 'block';
+                
+                if (type === 'success') {{
+                    setTimeout(() => {{
+                        message.style.display = 'none';
+                    }}, 5000);
+                }}
+            }}
+        </script>
+    </body>
+    </html>
+    """)

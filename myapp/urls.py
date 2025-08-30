@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView
+from .views import  home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page
 from rest_framework_simplejwt.views import TokenRefreshView 
 from .views import FirebaseTokenViewSet
 
@@ -36,4 +36,7 @@ urlpatterns = [
     path('api/send-notification/', SendNotificationView.as_view(), name='send_notification'),
     path('api/firebase-token/', firebase_token_view, name='firebase_token'),
     path('api/user/<uuid:user_uuid>/', UserDetailView.as_view(), name='user_detail'),
+    path('api/password-reset/request/', RequestPasswordResetView.as_view(), name='request_password_reset'),
+    path('api/password-reset/reset/', ResetPasswordView.as_view(), name='reset_password'),
+    path('reset-password/', reset_password_page, name='reset_password_page'),
 ] 

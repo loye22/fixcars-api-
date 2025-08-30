@@ -8,12 +8,9 @@
 3. **Implement Location Permission Handler** - Handle location deny permissions gracefully
 4. **Add Terms & Conditions** - Include in both Romanian and English languages
 
-5. **Create Supplier Waiting Screen and un Activate scrren** - Display message: "We will contact you soon to verify your business. If you have already completed this step and still see this message, please contact support."
-or in case of the the account is been suspended "you account is de activated to actvated again please contact support"
 
 6. **Implement Reset Password Functionality** - Allow users to reset their passwords
-7. **Implement Internet Connectivity Handling** - Check for offline status and respond appropriately
-8. **Implement Server Downtime Handling** - Gracefully manage API/backend errors
+
 
 
 

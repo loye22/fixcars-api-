@@ -294,3 +294,20 @@ class UserDevice(models.Model):
 
     def __str__(self):
         return f"{self.user.full_name} - {self.player_id}"
+
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='password_reset_tokens')
+    token = models.CharField(max_length=64, unique=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'password_reset_tokens'
+
+    def __str__(self):
+        return f"Password reset for {self.user.email}"
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at
