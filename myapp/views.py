@@ -36,6 +36,19 @@ def home(request):
     return HttpResponse("<h1>home</h1>")
 
 
+class HealthCheckView(APIView):
+    """API endpoint for health check"""
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        """Return a simple health check response"""
+        return Response({
+            'status': 'healthy',
+            'message': 'API is running successfully',
+            'timestamp': timezone.now().isoformat()
+        }, status=status.HTTP_200_OK)
+
+
 class ClientSignupView(APIView):
     """API endpoint for client registration"""
     permission_classes = [AllowAny]

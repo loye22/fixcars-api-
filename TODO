@@ -3,52 +3,23 @@
 # TODO List
 
 
-1. **Implement Requests Screen** - Build the main requests interface for users
 2. **Add App Launch Icon** - Create and implement app icon
-
 
 3. **Implement Location Permission Handler** - Handle location deny permissions gracefully
 4. **Add Terms & Conditions** - Include in both Romanian and English languages
 
-
 5. **Create Supplier Waiting Screen and un Activate scrren** - Display message: "We will contact you soon to verify your business. If you have already completed this step and still see this message, please contact support."
 or in case of the the account is been suspended "you account is de activated to actvated again please contact support"
 
-
 6. **Implement Reset Password Functionality** - Allow users to reset their passwords
-
 7. **Implement Internet Connectivity Handling** - Check for offline status and respond appropriately
 8. **Implement Server Downtime Handling** - Gracefully manage API/backend errors
 
-9. **Implement OneSignal Notifications** for the new request flow:
-    - Send notification to supplier when they receive a new request (DONE)
-    - Send confirmation notification to client when request is sent
-    - Send notification when any updates happen to the request
+
 
 
 
 
  
-**Request system**
-
-1.  **New Request Sent:**
-    *   Send notification to supplier: "New request received. Please check the app."
-    *   Send confirmation to client: "Request sent successfully."
-    *   Send both via OneSignal and Django.
-
-2.  **Supplier Rejects Request:**
-    *   Send notification to client: "Your request was rejected. Please find another supplier."
-
-3.  **Supplier Accepts Request:**
-    *   Send notification to client: "Supplier accepted! Please wait for their arrival."
-
-4.  **Job Completion:**
-    *   Let the supplier mark the request as "Completed" when the job is done.
-
-5.  **1-Hour Time Limit:**
-    *   Automatically expire any request that is not completed within 1 hour.
-
-
-
 
 
