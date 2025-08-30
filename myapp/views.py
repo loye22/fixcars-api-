@@ -49,6 +49,43 @@ class HealthCheckView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class AccountStatusView(APIView):
+    """API endpoint to check current user's account status"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Check the authenticated user's account status"""
+        try:
+            # Get the user profile for the authenticated user
+            user_profile = UserProfile.objects.get(django_user=request.user)
+            
+            return Response({
+                'success': True,
+                'account_status': {
+                    'user_id': str(user_profile.user_id),
+                    'email': user_profile.email,
+                    'full_name': user_profile.full_name,
+                    'is_active': user_profile.is_active,
+                    'is_verified': user_profile.is_verified,
+                    'account_status': user_profile.account_status,
+                    'approval_status': user_profile.approval_status,
+                    'user_type': user_profile.user_type,
+                    'created_at': user_profile.created_at.isoformat()
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except UserProfile.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'User profile not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': 'An error occurred while checking account status'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class ClientSignupView(APIView):
     """API endpoint for client registration"""
     permission_classes = [AllowAny]

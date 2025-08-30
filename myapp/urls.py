@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  home , HealthCheckView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView
+from .views import  home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView
 from rest_framework_simplejwt.views import TokenRefreshView 
 from .views import FirebaseTokenViewSet
 
@@ -10,6 +10,7 @@ firebase_token_view = FirebaseTokenViewSet.as_view({'get': 'list', 'post': 'crea
 urlpatterns = [
     path('', home, name='home'),
     path('api/health/', HealthCheckView.as_view(), name='health_check'),
+    path('api/account-status/', AccountStatusView.as_view(), name='account_status'),
     path('api/upload-file/', FileUploadView.as_view(), name='upload_file'),
     path('api/client-signup/', ClientSignupView.as_view(), name='client_signup'),
     path('api/supplier-signup/', SupplierSignupView.as_view(), name='supplier_signup'),
