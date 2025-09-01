@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page
+from .views import  home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page
 from rest_framework_simplejwt.views import TokenRefreshView 
 from .views import FirebaseTokenViewSet
 
@@ -32,6 +32,7 @@ urlpatterns = [
     path('api/requests/update-status/', UpdateRequestStatusView.as_view(), name='update_request_status'),
     path('api/notifications/', NotificationsListView.as_view(), name='notifications_list'),
     path('api/notifications/mark-read/', MarkNotificationReadView.as_view(), name='notification_mark_read'),
+    path('api/notifications/has-unread/', HasUnreadNotificationsView.as_view(), name='has_unread_notifications'),
     path('api/register-device/', RegisterDeviceView.as_view(), name='register_device'),
     path('api/send-notification/', SendNotificationView.as_view(), name='send_notification'),
     path('api/firebase-token/', firebase_token_view, name='firebase_token'),

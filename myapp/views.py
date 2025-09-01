@@ -1623,6 +1623,24 @@ class RegisterDeviceView(APIView):
         })
 
 
+class HasUnreadNotificationsView(APIView):
+    """API endpoint to check if user has unread notifications"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_profile = getattr(request.user, 'user_profile', None)
+        if not user_profile:
+            return Response({'success': False, 'error': 'User profile not found.'}, status=404)
+        
+        # Check if there are any unread notifications for this user
+        has_unread = Notification.objects.filter(receiver=user_profile, is_read=False).exists()
+        
+        return Response({
+            'success': True,
+            'has_unread_notifications': has_unread
+        }, status=200)
+
+
 class SendNotificationView(APIView):
     """API endpoint to send a notification to a specific user"""
     permission_classes = [IsAuthenticated]
