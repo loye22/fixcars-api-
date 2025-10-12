@@ -29,7 +29,6 @@ var/
 db.sqlite3
 /staticfiles/
 /media/
-!/media/brands/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
