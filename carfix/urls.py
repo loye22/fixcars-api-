@@ -9,6 +9,8 @@ urlpatterns = [
     path('', include('myapp.urls')),
 ]
 
+# Serve static files (CSS, JS, images) in both development and production
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # Serve media files during development
 if settings.DEBUG:
