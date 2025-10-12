@@ -9,7 +9,37 @@
 4. **Add Terms & Conditions** - Include in both Romanian and English languages
 
 
-6. **Implement Reset Password Functionality** - Allow users to reset their passwords
+
+
+
+
+
+1. All elements on the main page should be displayed without scrolling.
+2. Manage multiple branches under the same card/profile.
+3. Add address input with map integration.
+4. Enable automatic scrolling for brand listings.
+5. If all cars are included in the services, display all available brands.
+6. Add a “hide review” option for suppliers.
+7. Display prices directly on the platform.
+8. Set a 2-minute timer to automatically close unfinished requests.
+9. Create an evaluation screen.
+10. Change the chat screen wallpaper to the logo.
+11. Update the tiers change service  to have two options: “Request-based” and “Fixed.”
+12. Ensure SOS alerts appear in real time.
+13. In the supplier app: hide phone numbers in chat and change the **Service** label to **Chat**.
+14. Fix the button functionality when adding a new review.
+15. Change the label on main cards to **Close/Open**.
+16. Apply the new dark theme.
+
+
+
+
+
+
+
+
+
+ 
 
 
 
