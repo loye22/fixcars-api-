@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-h9-d*8nie59rxy6f)ok6bf9cx(+8p(u*23m88_^2b%w+296$!c
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = [ 'fixcars.ro' , 'www.fixcars.ro'  ,'10.0.2.2'  , '192.168.1.129' , '127.0.0.1' , '157.180.127.178']
+ALLOWED_HOSTS = [ 'localhost' ,  'fixcars.ro' , 'www.fixcars.ro'  ,'10.0.2.2'  , '192.168.1.129' , '127.0.0.1' , '157.180.127.178']
 
 
 # Application definition
