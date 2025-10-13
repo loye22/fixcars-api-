@@ -45,7 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',  # Commented out - using Nginx to serve static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -131,11 +131,11 @@ STATICFILES_DIRS = [
 ]
 
 # WhiteNoise configuration for serving static files in production
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  # Commented out - using Nginx to serve static files
 
-# Additional WhiteNoise settings for better static file serving
-WHITENOISE_USE_FINDERS = True
-WHITENOISE_AUTOREFRESH = True
+# # Additional WhiteNoise settings for better static file serving
+# WHITENOISE_USE_FINDERS = True
+# WHITENOISE_AUTOREFRESH = True
 
 
 # Default primary key field type
