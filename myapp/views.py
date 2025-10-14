@@ -446,23 +446,15 @@ class SupplierSignupView(APIView):
                 expires_at=expires_at
             )
             
-            # Send OTP email
-            email_sent = send_otp_email(
-                email=email,
-                otp=otp,
-                subject="Codul tău de verificare FixCars.ro - Supplier Account"
-            )
-            
-            if not email_sent:
-                # If email fails, delete both user and profile
-                if user_profile:
-                    user_profile.delete()
-                if django_user:
-                    django_user.delete()
-                return Response({
-                    'success': False,
-                    'error': 'Failed to send verification email. Please try again.'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # Send OTP email (best-effort; do not fail on email issues)
+            try:
+                send_otp_email(
+                    email=email,
+                    otp=otp,
+                    subject="Codul tău de verificare FixCars.ro - Supplier Account"
+                )
+            except Exception:
+                pass
             
             return Response({
                 'success': True,
