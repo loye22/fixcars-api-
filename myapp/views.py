@@ -525,13 +525,15 @@ class FileUploadView(APIView):
                 for chunk in uploaded_file.chunks():
                     destination.write(chunk)
             
-            # Generate URL
+            # Generate URLs (relative and absolute)
             file_url = f"{settings.MEDIA_URL}uploads/{unique_filename}"
+            absolute_file_url = request.build_absolute_uri(file_url)
             
             return Response({
                 'success': True,
                 'message': 'File uploaded successfully',
-                'file_url': file_url,
+                'file_url': absolute_file_url,
+                'file_path': file_url,
                 'filename': unique_filename,
                 'original_name': uploaded_file.name,
                 'file_size': uploaded_file.size
