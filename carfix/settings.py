@@ -175,7 +175,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_HOST_USER = 'noreply@fixcars.ro'
-EMAIL_HOST_PASSWORD = '}9lPExTQdq@!eU%+'  # Add your email password here
+EMAIL_HOST_PASSWORD = '9nxPfxod.Y[*),b8'  
 DEFAULT_FROM_EMAIL = 'noreply@fixcars.ro'
 
 # Email settings for development (optional - for testing)
