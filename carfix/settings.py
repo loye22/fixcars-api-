@@ -166,17 +166,33 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# Email Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'mail.fixcars.ro'
-EMAIL_PORT = 465
+# # Email Configuration fixcars.ro 
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'mail.fixcars.ro'
+# EMAIL_PORT = 465
+# # EMAIL_USE_SSL = True
+# # EMAIL_PORT = 587
+# EMAIL_USE_TLS = False
 # EMAIL_USE_SSL = True
-# EMAIL_PORT = 587
-EMAIL_USE_TLS = False
-EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'noreply@fixcars.ro'
-EMAIL_HOST_PASSWORD = '9nxPfxod.Y[*),b8'  
-DEFAULT_FROM_EMAIL = 'noreply@fixcars.ro'
+# EMAIL_HOST_USER = 'noreply@fixcars.ro'
+# EMAIL_HOST_PASSWORD = '9nxPfxod.Y[*),b8'  
+# DEFAULT_FROM_EMAIL = 'noreply@fixcars.ro'
+
+# Email Configuration gmail
+# settings.py
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True  # Use TLS (secure connection)
+EMAIL_USE_SSL = False  # Should be False if using TLS
+EMAIL_HOST_USER = 'charlotte.for.it.services@gmail.com'  # Your Gmail address
+EMAIL_HOST_PASSWORD = 'ynmj uxbu qgkv hqow'  # The 16-character App Password you generated
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+
+
 
 # Email settings for development (optional - for testing)
 # if DEBUG:
