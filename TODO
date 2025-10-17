@@ -36,12 +36,15 @@
 
 
 
+##############################################
 
+production 
 
-
- 
-
-
+1. remove servise photo from servise model 
+2. remobe photo url , lan and lat  for msupplier brand servises 
+3. add lou out on the phone app 
+4. make sure that T&C adn privicy policy are acceble 
+5. make sure taht all the serviuses lan and lat is comming form the user profie 
 
 
 

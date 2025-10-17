@@ -46,6 +46,8 @@ class SupplierBrandServiceSerializer(serializers.ModelSerializer):
     total_reviews = serializers.SerializerMethodField()
     distance_km = serializers.SerializerMethodField()
     services = ServiceWithTagsSerializer(many=True, read_only=True)
+    latitude = serializers.SerializerMethodField()
+    longitude = serializers.SerializerMethodField()
 
     class Meta:
         model = SupplierBrandService
@@ -113,6 +115,14 @@ class SupplierBrandServiceSerializer(serializers.ModelSerializer):
     def get_distance_km(self, obj):
         """Get the distance in kilometers that was calculated in the view"""
         return getattr(obj, 'distance_km', None)
+
+    def get_latitude(self, obj):
+        supplier_lat = getattr(obj.supplier, 'latitude', None)
+        return float(supplier_lat) if supplier_lat is not None else 0.0
+
+    def get_longitude(self, obj):
+        supplier_lng = getattr(obj.supplier, 'longitude', None)
+        return float(supplier_lng) if supplier_lng is not None else 0.0
 
 class SupplierProfileSerializer(serializers.ModelSerializer):
     """Serializer for supplier profile data (excluding sensitive fields)"""

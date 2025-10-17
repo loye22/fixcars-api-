@@ -875,9 +875,13 @@ class ServicesView(APIView):
             r = 6371
             return round(r * c, 2)
         
-        # Add distance to each queryset object
+        # Add distance to each queryset object using supplier profile coordinates
         for service in qs:
-            service.distance_km = calculate_distance(service.latitude, service.longitude)
+            supplier_lat = getattr(service.supplier, 'latitude', None)
+            supplier_lng = getattr(service.supplier, 'longitude', None)
+            lat_value = float(supplier_lat) if supplier_lat is not None else 0.0
+            lng_value = float(supplier_lng) if supplier_lng is not None else 0.0
+            service.distance_km = calculate_distance(lat_value, lng_value)
         
         # Sort by distance (closest first)
         sorted_services = sorted(qs, key=lambda x: x.distance_km)
@@ -950,6 +954,7 @@ class ServicesByCategoryView(APIView):
 class SupplierProfileSummaryView(APIView):
     """New API endpoint to return supplier profile summary with requested fields"""
     permission_classes = [IsAuthenticated]
+    
 
     def get(self, request, supplier_id=None):
         try:
