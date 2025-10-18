@@ -1,18 +1,4 @@
-
-
 # TODO List
-
-
-2. **Add App Launch Icon** - Create and implement app icon
-
-3. **Implement Location Permission Handler** - Handle location deny permissions gracefully
-4. **Add Terms & Conditions** - Include in both Romanian and English languages
-
-
-
-
-
-
 
 1. All elements on the main page should be displayed without scrolling.
 2. Manage multiple branches under the same card/profile.
@@ -30,23 +16,26 @@
 14. Fix the button functionality when adding a new review.
 15. Change the label on main cards to **Close/Open**.
 16. Apply the new dark theme.
+17. **Implement Location Permission Handler** - Handle location deny permissions gracefully
 
 
 
 
 
+############################################################################################
 
-##############################################
 
-production 
 
-1. remove servise photo from servise model 
-2. remobe photo url , lan and lat  for msupplier brand servises 
-3. add log out on the phone app 
-4. make sure that T&C adn privicy policy are acceble 
-5. make sure that all the serviuses lan and lat is comming form the user profie 
-6. fix write review box over flow button 
-7. fix the AAA cars over flow text 
+ **Production Bug Fixes**
+
+0. Add image compression to the client signup screen.
+1. Remove the service photo field from the Service model in API.
+2. Get latitude and longitude from the supplier brand services.
+
+5. Verify that all services’ latitude and longitude are coming from the user profile.
+8. Prepare the app for production by setting the Android API level to 35 and adding all necessary permissions.
+
+
 
 
 
