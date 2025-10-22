@@ -311,3 +311,35 @@ class PasswordResetToken(models.Model):
 
     def is_expired(self):
         return timezone.now() > self.expires_at
+
+
+
+# In models.py
+
+class SalesRepresentative(models.Model):
+    representative_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    city = models.CharField(max_length=50, choices=ROMANIAN_CITIES)
+    phone = models.CharField(max_length=20, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'sales_representatives'
+
+    def __str__(self):
+        return self.name
+
+class SupplierReferral(models.Model):
+    referral_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sales_representative = models.ForeignKey(SalesRepresentative, on_delete=models.CASCADE, related_name='referrals')
+    supplier = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='referrals')
+    has_received_commission = models.BooleanField(default=False)  # Moved here
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'supplier_referrals'
+        unique_together = ('sales_representative', 'supplier')
+
+    def __str__(self):
+        return f"{self.sales_representative.name} referred {self.supplier.full_name}"

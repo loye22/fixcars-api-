@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours, CoverPhoto, UserDevice
+from .models import SalesRepresentative, SupplierReferral, UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours, CoverPhoto, UserDevice
 from django.contrib import admin
 from .models import UserProfile
 # Register your models here.
@@ -144,3 +144,43 @@ class UserDeviceAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user')
+
+
+
+@admin.register(SalesRepresentative)
+class SalesRepresentativeAdmin(admin.ModelAdmin):
+    list_display = ('representative_id', 'name', 'email', 'city', 'phone', 'created_at')
+    search_fields = ('name', 'email', 'phone', 'city')
+    list_filter = ('city', 'created_at')
+    readonly_fields = ('representative_id', 'created_at')
+    ordering = ('-created_at',)
+
+
+@admin.register(SupplierReferral)
+class SupplierReferralAdmin(admin.ModelAdmin):
+    list_display = (
+        'referral_id',
+        'sales_representative',
+        'supplier',
+        'has_received_commission',
+        'created_at',
+    )
+    search_fields = (
+        'sales_representative__name',
+        'sales_representative__email',
+        'supplier__full_name',
+    )
+    list_filter = ('has_received_commission', 'created_at',)
+    readonly_fields = ('referral_id', 'created_at')
+    ordering = ('-created_at',)
+    #search_fields = ['supplier__full_name']
+    autocomplete_fields = ['supplier', 'sales_representative']
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Limit foreign key choices for cleaner admin UI."""
+        from .models import UserProfile, SalesRepresentative
+        if db_field.name == "supplier":
+            kwargs["queryset"] = UserProfile.objects.filter(user_type='supplier')
+        elif db_field.name == "sales_representative":
+            kwargs["queryset"] = SalesRepresentative.objects.all()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
