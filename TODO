@@ -28,12 +28,25 @@
 
  **Production Bug Fixes**
 
-0. Add image compression to the client signup screen.
 1. Remove the service photo field from the Service model in API.
-2. Get latitude and longitude from the supplier brand services.
+2. Verify that api/services/ latitude and longitude are coming from the user profile.
+3. fix the notfcation on the ios 
+5. Add the image pick up for permission for ios
+7. Integrate google map api 
+8. In the servises card change  "nu este disponibil" with " închis/deschis "
+9. On the mechanic profile change remove the number under the mesaje 
+10. on the chat use diffrent color for the other user  
+11. on the msg chat make sure to use elegent widget when you reply to someone 
+13. on the client home screen  make sure that each  elemnt in the grid are not scrolable so fit the tesxt in the contaner 
+14. no space between text and reset filter button
+15. On AAA screen add sizebox() at the end to make sure that the lat elemnt is not overflow by the buttom border 
+17. on the chat make sure if you send an imge it will be shown like whatapp
+18. Add sales person featcher 
+19. fix the rest password 
 
-5. Verify that all services’ latitude and longitude are coming from the user profile.
-8. Prepare the app for production by setting the Android API level to 35 and adding all necessary permissions.
+
+
+
 
 
 

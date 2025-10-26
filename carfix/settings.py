@@ -209,3 +209,6 @@ ONESIGNAL_REST_API_KEY = 'os_v2_app_vq5jiy4h3rg5vpwn7ngqyq4czrilhe5sjbzumc4p6a5g
 
 # Firebase Configuration
 FIREBASE_SERVICE_ACCOUNT_KEY_PATH = BASE_DIR / 'firebase' / 'serviceAccountKey.json'
+
+# Site Configuration
+SITE_DOMAIN = 'https://www.app.fixcars.ro'  # Production domain for email links

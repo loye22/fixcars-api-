@@ -144,8 +144,10 @@ def generate_reset_token():
 def send_password_reset_email(email, reset_token, user_name):
     """Send elegant Romanian password reset email"""
     try:
-        # Create reset URL - pointing to our Django server
-        reset_url = f"http://localhost:8000/reset-password?token={reset_token}"
+        from django.conf import settings
+        
+        # Create reset URL - using dynamic domain from settings
+        reset_url = f"{settings.SITE_DOMAIN}/reset-password?token={reset_token}"
         
         # Elegant Romanian HTML email
         html_message = f"""
