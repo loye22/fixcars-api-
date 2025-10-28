@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice
+from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice, SalesRepresentative, SupplierReferral
 from django.db import models
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
@@ -1692,6 +1692,60 @@ class HasUnreadNotificationsView(APIView):
             'success': True,
             'has_unread_notifications': has_unread
         }, status=200)
+
+
+class ReferedByView(APIView):
+    """Allow an authenticated supplier to set a referral by a sales representative's email."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            # Validate current user profile
+            supplier = getattr(request.user, 'user_profile', None)
+            if not supplier:
+                return Response({'success': False, 'error': 'User profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+            if supplier.user_type != 'supplier':
+                return Response({'success': False, 'error': 'Only suppliers can set referral.'}, status=status.HTTP_403_FORBIDDEN)
+
+            # Get and validate email
+            email = request.data.get('email')
+            if not email:
+                return Response({'success': False, 'error': 'email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, email):
+                return Response({'success': False, 'error': 'Please provide a valid email address.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check sales representative existence
+            sales_rep = SalesRepresentative.objects.filter(email=email).first()
+            if not sales_rep:
+                return Response({'success': False, 'error': 'Sales representative not found for the provided email.'}, status=status.HTTP_404_NOT_FOUND)
+
+            # Prevent duplicate referral
+            existing = SupplierReferral.objects.filter(sales_representative=sales_rep, supplier=supplier).first()
+            if existing:
+                return Response({'success': True, 'message': 'Referral already exists.', 'data': {
+                    'referral_id': str(existing.referral_id),
+                    'sales_representative': sales_rep.email,
+                    'has_received_commission': existing.has_received_commission,
+                    'created_at': existing.created_at.isoformat(),
+                }}, status=status.HTTP_200_OK)
+
+            # Create referral
+            referral = SupplierReferral.objects.create(
+                sales_representative=sales_rep,
+                supplier=supplier
+            )
+
+            return Response({'success': True, 'message': 'Referral saved successfully.', 'data': {
+                'referral_id': str(referral.referral_id),
+                'sales_representative': sales_rep.email,
+                'has_received_commission': referral.has_received_commission,
+                'created_at': referral.created_at.isoformat(),
+            }}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class SendNotificationView(APIView):
