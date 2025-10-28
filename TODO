@@ -1,48 +1,30 @@
 # TODO List
 
-1. All elements on the main page should be displayed without scrolling.
-2. Manage multiple branches under the same card/profile.
-3. Add address input with map integration.
-4. Enable automatic scrolling for brand listings.
-5. If all cars are included in the services, display all available brands.
-6. Add a “hide review” option for suppliers.
-7. Display prices directly on the platform.
-8. Set a 2-minute timer to automatically close unfinished requests.
-9. Create an evaluation screen.
-10. Change the chat screen wallpaper to the logo.
-11. Update the tiers change service  to have two options: “Request-based” and “Fixed.”
-12. Ensure SOS alerts appear in real time.
-13. In the supplier app: hide phone numbers in chat and change the **Service** label to **Chat**.
-14. Fix the button functionality when adding a new review.
-15. Change the label on main cards to **Close/Open**.
-16. Apply the new dark theme.
-17. **Implement Location Permission Handler** - Handle location deny permissions gracefully
+1. Manage multiple branches under the same card/profile.
+2. Add address input with map integration.
+3. Enable automatic scrolling for brand listings.
+4. If all cars are included in the services, display all available brands.
+5. Add a “hide review” option for suppliers.
+6. Display prices directly on the platform.
+7. Set a 2-minute timer to automatically close unfinished requests.
+8. Create an evaluation screen (review screen after the service is done like  glovo).
+9. Update the tiers change service  to have two options: “Request-based” and “Fixed.”
+10. Ensure SOS alerts appear in real time.
+11. Fix the button functionality when adding a new review.
+12. Apply the new dark theme.
+14. Remove the service photo field from the Service model in API.
+15. Verify that api/services/ latitude and longitude are coming from the user profile.
+16. fix the notfcation on the ios 
+17. Integrate google map api 
+18. no space between text and reset filter button
+19. Add sales person featcher (IMPORTANT!!!!!)
+20. The app crashes on the signup screen. Specifically, when I select an image from the library and then immediately try to take a photo with the camera, the app crashes 
+21. replay to apple "The phone number is required for app functionality, including scheduling appointments with mechanics and requesting AAA (car towing) services. User phone numbers are not shared with mechanics or businesses, except when AAA services are requested." (IMPORTANT!!!!!)
+22. give apple access to the mechanic account (IMPORTANT!!!!!)
+23. add user data  detele funtions  (IMPORTANT!!!!!)
+24. Add Arrow back to each screen 
 
 
-
-
-
-############################################################################################
-
-
-
- **Production Bug Fixes**
-
-1. Remove the service photo field from the Service model in API.
-2. Verify that api/services/ latitude and longitude are coming from the user profile.
-3. fix the notfcation on the ios 
-5. Add the image pick up for permission for ios
-7. Integrate google map api 
-8. In the servises card change  "nu este disponibil" with " închis/deschis "
-9. On the mechanic profile change remove the number under the mesaje 
-10. on the chat use diffrent color for the other user  
-11. on the msg chat make sure to use elegent widget when you reply to someone 
-13. on the client home screen  make sure that each  elemnt in the grid are not scrolable so fit the tesxt in the contaner 
-14. no space between text and reset filter button
-15. On AAA screen add sizebox() at the end to make sure that the lat elemnt is not overflow by the buttom border 
-17. on the chat make sure if you send an imge it will be shown like whatapp
-18. Add sales person featcher 
-19. fix the rest password 
 
 
 

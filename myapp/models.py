@@ -97,6 +97,7 @@ class UserProfile(models.Model):
     approval_status = models.CharField(max_length=20, choices=APPROVAL_STATUSES, default='pending')
     account_status = models.CharField(max_length=20, choices=ACCOUNT_STATUSES, default='active')
     is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -161,6 +161,14 @@ class ClientSignupView(APIView):
                     'error': 'Password must be at least 8 characters long'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            # Block re-registration if a deleted account exists with same email or phone
+            deleted_profile = UserProfile.objects.filter(models.Q(email=email) | models.Q(phone=phone), is_deleted=True).first()
+            if deleted_profile:
+                return Response({
+                    'success': False,
+                    'error': 'Acest cont a fost șters. Reînregistrarea cu aceleași credențiale nu este permisă.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             # Check if email already exists in Django User model
             if User.objects.filter(email=email).exists():
                 return Response({
@@ -375,6 +383,14 @@ class SupplierSignupView(APIView):
                     'error': 'Latitude and longitude must be valid numbers'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            # Block re-registration if a deleted account exists with same email or phone
+            deleted_profile = UserProfile.objects.filter(models.Q(email=email) | models.Q(phone=phone), is_deleted=True).first()
+            if deleted_profile:
+                return Response({
+                    'success': False,
+                    'error': 'Acest cont a fost șters. Reînregistrarea cu aceleași credențiale nu este permisă.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             # Check if email already exists in Django User model
             if User.objects.filter(email=email).exists():
                 return Response({
@@ -731,6 +747,13 @@ class LoginView(APIView):
                     'message': 'Contul este suspendat. Vă rugăm să contactați suportul.'
                 }, status=status.HTTP_404_NOT_FOUND)
             
+            # Block login if account is deleted
+            if getattr(user_profile, 'is_deleted', False):
+                return Response({
+                    'success': False,
+                    'message': 'Acest cont a fost șters și nu mai poate fi folosit.'
+                }, status=status.HTTP_403_FORBIDDEN)
+
             # Check if account is active
             if not user_profile.is_active:
                 return Response({
@@ -778,6 +801,37 @@ class LoginView(APIView):
                 'success': False,
                 'message': f'An error occurred during login: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class DeleteAccountView(APIView):
+    """Authenticated endpoint to soft-delete current user's account"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            user_profile = getattr(request.user, 'user_profile', None)
+            if not user_profile:
+                return Response({'success': False, 'error': 'User profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            if user_profile.is_deleted:
+                return Response({'success': True, 'message': 'Account already deleted'}, status=status.HTTP_200_OK)
+
+            user_profile.is_deleted = True
+            user_profile.is_active = False
+            user_profile.account_status = 'suspended'
+            user_profile.save(update_fields=['is_deleted', 'is_active', 'account_status'])
+
+            # Also deactivate Django auth user to prevent login via other flows
+            try:
+                if user_profile.django_user:
+                    user_profile.django_user.is_active = False
+                    user_profile.django_user.save(update_fields=['is_active'])
+            except Exception:
+                pass
+
+            return Response({'success': True, 'message': 'Contul a fost șters.'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
