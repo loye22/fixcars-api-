@@ -12,16 +12,24 @@
 10. Ensure SOS alerts appear in real time.
 11. Fix the button functionality when adding a new review.
 12. Apply the new dark theme.
-14. Remove the service photo field from the Service model in API.
-15. Verify that api/services/ latitude and longitude are coming from the user profile.
-16. fix the notfcation on the ios 
-17. Integrate google map api 
-18. no space between text and reset filter button
-19. Add sales person featcher (IMPORTANT!!!!!)
-20. The app crashes on the signup screen. Specifically, when I select an image from the library and then immediately try to take a photo with the camera, the app crashes 
-21. replay to apple "The phone number is required for app functionality, including scheduling appointments with mechanics and requesting AAA (car towing) services. User phone numbers are not shared with mechanics or businesses, except when AAA services are requested." (IMPORTANT!!!!!)
-22. give apple access to the mechanic account (IMPORTANT!!!!!)
-24. Add Arrow back to each screen 
+13. Remove the service photo field from the Service model in API.
+14. Verify that api/services/ latitude and longitude are coming from the user profile.
+15. fix the notfcation on the ios 
+16. Integrate google map api 
+17. no space between text and reset filter button
+18. Add a new field `approved` (boolean: true/false) to the **SalesRepresentative** model.
+19. Update the **`api/referredBy/`** endpoint to verify if the SalesRepresentative is approved; if not, return an appropriate error message.
+20. Create a **Sales Representative Registration Form** for the web, ensuring it is fully responsive on both mobile and desktop.
+21. Move all email-related logic to the **Redis server** to handle email processing asynchronously.
+22. Implement a feature that sends an email notification for every new **registration or subscription**.
+
+
+
+
+
+ 
+
+
 
 
 

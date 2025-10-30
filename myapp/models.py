@@ -3,6 +3,7 @@ import uuid
 from multiselectfield import MultiSelectField
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
 
 # Choices for enumerated fields
 USER_TYPES = (
@@ -322,7 +323,11 @@ class SalesRepresentative(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     city = models.CharField(max_length=50, choices=ROMANIAN_CITIES)
-    phone = models.CharField(max_length=20, unique=True)
+    phone = models.CharField(
+        max_length=10,
+        unique=True,
+        validators=[RegexValidator(r'^\d{10}$', 'Phone must be exactly 10 digits.')]
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
