@@ -32,10 +32,12 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = (
-        'user_id', 'full_name', 'email', 'phone', 'user_type', 'city', 'sector',
-        'approval_status', 'account_status', 'is_active', 'is_verified', 'created_at'
-    )
+    # list_display = (
+    #     'user_id', 'full_name', 'email', 'phone', 'user_type', 'city', 'sector',
+    #     'approval_status', 'account_status', 'is_active', 'is_verified', 'created_at'
+    # )
+    list_display = ('full_name', 'is_active' ,  'email')
+
     search_fields = ('full_name', 'email', 'phone')
     list_filter = ('user_type', 'city', 'sector', 'approval_status', 'account_status', 'is_active', 'is_verified')
     readonly_fields = ('user_id', 'created_at')
