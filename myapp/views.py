@@ -1720,6 +1720,8 @@ class ReferedByView(APIView):
             sales_rep = SalesRepresentative.objects.filter(email=email).first()
             if not sales_rep:
                 return Response({'success': False, 'error': 'Sales representative not found for the provided email.'}, status=status.HTTP_404_NOT_FOUND)
+            if not sales_rep.approved:
+                return Response({'success': False, 'error': 'Sales representative is not approved.'}, status=status.HTTP_403_FORBIDDEN)
 
             # Prevent duplicate referral
             existing = SupplierReferral.objects.filter(sales_representative=sales_rep, supplier=supplier).first()

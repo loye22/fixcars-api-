@@ -22,6 +22,16 @@
 20. Create a **Sales Representative Registration Form** for the web, ensuring it is fully responsive on both mobile and desktop.
 21. Move all email-related logic to the **Redis server** to handle email processing asynchronously.
 22. Implement a feature that sends an email notification for every new **registration or subscription**.
+Here’s a more natural, human-sounding version of your text:
+23. Allow mechanics to add their services by selecting from a predefined list.
+24. We have new services that Alexandra sent — these should be merged with the existing ones.
+25. Make sure the new category is included properly.
+26. Remove the icons.
+27. Enable profile editing.
+28. Apple requires that the app does **not** ask for location permission at the start.
+29. Add a note explaining that the phone number is requested **only** for towing services (for clients) and for businesses to promote their services.
+
+ 
 
 
 

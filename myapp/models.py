@@ -78,6 +78,9 @@ SERVICE_CATEGORIES = (
     ('vulcanizare_auto_mobila', 'Vulcanizare Auto Mobilă'),
     ('tractari_auto', 'Tractări Auto'),
     ('tuning_auto', 'Tuning Auto'),
+    ('spalatorie_auto', 'Spălătorie Auto'),
+    ('climatizare_auto', 'Climatizare Auto'),
+    ('caroserie_si_vopsitorie', 'Caroserie și Vopsitorie'),
 )
 
 class UserProfile(models.Model):
@@ -328,6 +331,7 @@ class SalesRepresentative(models.Model):
         unique=True,
         validators=[RegexValidator(r'^\d{10}$', 'Phone must be exactly 10 digits.')]
     )
+    approved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
