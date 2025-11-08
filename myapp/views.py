@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice, SalesRepresentative, SupplierReferral
+from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice, SalesRepresentative, SupplierReferral, ROMANIAN_CITIES, SECTORS
 from django.db import models
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
@@ -1042,16 +1042,26 @@ class SupplierBrandServiceOptionsView(APIView):
             # Convert dict to list
             services_list = list(services_by_category.values())
             
+            # Format cities as list of {value, label} objects
+            cities_list = [{'value': city[0], 'label': city[1]} for city in ROMANIAN_CITIES]
+            
+            # Format sectors as list of {value, label} objects
+            sectors_list = [{'value': sector[0], 'label': sector[1]} for sector in SECTORS]
+            
             return Response({
                 'success': True,
                 'data': {
                     'brands': brand_serializer.data,
-                    'services_by_category': services_list
+                    'services_by_category': services_list,
+                    'cities': cities_list,
+                    'sectors': sectors_list
                 },
                 'counts': {
                     'brands': brands.count(),
                     'categories': len(services_list),
-                    'total_services': all_services.count()
+                    'total_services': all_services.count(),
+                    'cities': len(cities_list),
+                    'sectors': len(sectors_list)
                 }
             }, status=status.HTTP_200_OK)
             
