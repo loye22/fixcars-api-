@@ -9,27 +9,21 @@
 7. Set a 2-minute timer to automatically close unfinished requests.
 8. Create an evaluation screen (review screen after the service is done like  glovo).
 9. Update the tiers change service  to have two options: “Request-based” and “Fixed.”
-10. Ensure SOS alerts appear in real time.
-11. Fix the button functionality when adding a new review.
 12. Apply the new dark theme.
 13. Remove the service photo field from the Service model in API.
-14. Verify that api/services/ latitude and longitude are coming from the user profile.
 15. fix the notfcation on the ios 
 16. Integrate google map api 
-17. no space between text and reset filter button
-18. Add a new field `approved` (boolean: true/false) to the **SalesRepresentative** model.
-19. Update the **`api/referredBy/`** endpoint to verify if the SalesRepresentative is approved; if not, return an appropriate error message.
-20. Create a **Sales Representative Registration Form** for the web, ensuring it is fully responsive on both mobile and desktop.
-21. Move all email-related logic to the **Redis server** to handle email processing asynchronously.
-22. Implement a feature that sends an email notification for every new **registration or subscription**.
+17. Create a **Sales Representative Registration Form** for the web, ensuring it is fully responsive on both mobile and desktop.
+18. Move all email-related logic to the **Redis server** to handle email processing asynchronously.
+19. Implement a feature that sends an email notification for every new **registration or subscription**.
 Here’s a more natural, human-sounding version of your text:
-23. Allow mechanics to add their services by selecting from a predefined list.
-24. We have new services that Alexandra sent — these should be merged with the existing ones.
-25. Make sure the new category is included properly.
-26. Remove the icons.
-27. Enable profile editing.
-28. Apple requires that the app does **not** ask for location permission at the start.
-29. Add a note explaining that the phone number is requested **only** for towing services (for clients) and for businesses to promote their services.
+20. Allow mechanics to add their services by selecting from a predefined list.
+21. We have new services that Alexandra sent — these should be merged with the existing ones.
+22. Make sure the new category is included properly.
+23. Remove the icons.
+24. Enable profile editing.
+25. Apple requires that the app does **not** ask for location permission at the start.
+
 
  
 

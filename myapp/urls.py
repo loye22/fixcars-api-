@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page, DeleteAccountView, ReferedByView
+from .views import  home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page, DeleteAccountView, ReferedByView, SupplierBrandServiceOptionsView, SupplierBrandServiceCreateView
 from rest_framework_simplejwt.views import TokenRefreshView 
 from .views import FirebaseTokenViewSet
 
@@ -21,6 +21,8 @@ urlpatterns = [
     path('api/brands/', CarBrandListView.as_view(), name='brand_list'),
     path('api/services/', ServicesView.as_view(), name='services'),
     path('api/services-by-category/', ServicesByCategoryView.as_view(), name='services_by_category'), # this end point will give me all the servises by category
+    path('api/supplier-brand-service-options/', SupplierBrandServiceOptionsView.as_view(), name='supplier_brand_service_options'),
+    path('api/supplier-brand-services/', SupplierBrandServiceCreateView.as_view(), name='supplier_brand_service_create'),
     path('api/supplierProfile/<uuid:supplier_id>/', SupplierProfileView.as_view(), name='supplier_profile'),
     path('api/supplierProfileSummary/', SupplierProfileSummaryView.as_view(), name='supplier_profile_summary_me'),
     path('api/supplierProfileSummary/<uuid:supplier_id>/', SupplierProfileSummaryView.as_view(), name='supplier_profile_summary'),

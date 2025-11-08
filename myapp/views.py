@@ -21,7 +21,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer
+from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer
 from .onesignal_service import OneSignalService
 import math
 from decimal import Decimal
@@ -1003,6 +1003,142 @@ class ServicesByCategoryView(APIView):
                 'success': False,
                 'error': f'An error occurred while fetching services: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SupplierBrandServiceOptionsView(APIView):
+    """API endpoint to get brands and services grouped by category for mobile app"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Returns:
+        - List of brands (with brand name and photo)
+        - List of services grouped by category
+        """
+        try:
+            # Get all brands
+            brands = CarBrand.objects.all().order_by('brand_name')
+            brand_serializer = CarBrandSerializer(brands, many=True, context={"request": request})
+            
+            # Get all services grouped by category
+            services_by_category = {}
+            all_services = Service.objects.all().prefetch_related('tags').order_by('service_name')
+            service_serializer = ServiceWithTagsSerializer(all_services, many=True, context={"request": request})
+            
+            # Group services by category
+            for service_data in service_serializer.data:
+                category = service_data['category']
+                category_display = dict(SERVICE_CATEGORIES).get(category, category)
+                
+                if category not in services_by_category:
+                    services_by_category[category] = {
+                        'category': category,
+                        'category_name': category_display,
+                        'services': []
+                    }
+                
+                services_by_category[category]['services'].append(service_data)
+            
+            # Convert dict to list
+            services_list = list(services_by_category.values())
+            
+            return Response({
+                'success': True,
+                'data': {
+                    'brands': brand_serializer.data,
+                    'services_by_category': services_list
+                },
+                'counts': {
+                    'brands': brands.count(),
+                    'categories': len(services_list),
+                    'total_services': all_services.count()
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'An error occurred while fetching data: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SupplierBrandServiceCreateView(APIView):
+    """API endpoint to create a new SupplierBrandService entry"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """
+        Create a new SupplierBrandService.
+        
+        The supplier is automatically determined from the authenticated user.
+        
+        Required fields:
+        - brand_id: UUID of the car brand
+        - service_ids: List of service UUIDs
+        - city: City name (from ROMANIAN_CITIES choices)
+        - latitude: Decimal latitude
+        - longitude: Decimal longitude
+        
+        Optional fields:
+        - sector: Sector name (from SECTORS choices)
+        - price: Decimal price (defaults to 0 if not provided)
+        
+        The service will be created with active=True by default.
+        """
+        # Get the supplier from the authenticated user
+        try:
+            supplier = getattr(request.user, 'user_profile', None)
+            if not supplier:
+                return Response({
+                    'success': False,
+                    'error': 'User profile not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Verify the user is a supplier
+            if supplier.user_type != 'supplier':
+                return Response({
+                    'success': False,
+                    'error': 'Authenticated user is not a supplier'
+                }, status=status.HTTP_403_FORBIDDEN)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error retrieving user profile: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Create serializer with supplier in context
+        serializer = SupplierBrandServiceCreateSerializer(
+            data=request.data,
+            context={'supplier': supplier, 'request': request}
+        )
+        
+        if serializer.is_valid():
+            try:
+                supplier_brand_service = serializer.save()
+                
+                # Serialize the created object for response
+                response_serializer = SupplierBrandServiceSerializer(
+                    supplier_brand_service,
+                    context={"request": request}
+                )
+                
+                return Response({
+                    'success': True,
+                    'message': 'Supplier brand service created successfully',
+                    'data': response_serializer.data
+                }, status=status.HTTP_201_CREATED)
+                
+            except Exception as e:
+                return Response({
+                    'success': False,
+                    'error': f'An error occurred while creating the service: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response({
+                'success': False,
+                'error': 'Validation failed',
+                'details': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SupplierProfileSummaryView(APIView):

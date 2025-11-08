@@ -169,7 +169,7 @@ class SupplierBrandService(models.Model):
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    photo_url = models.URLField()  # Required: Stores URL for service photo
+    #photo_url = models.URLField()  # Required: Stores URL for service photo
     active = models.BooleanField(default=True)
 
     class Meta:

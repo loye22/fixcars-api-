@@ -71,7 +71,6 @@ class SupplierBrandServiceSerializer(serializers.ModelSerializer):
             'price',
             'active',
             'services',
-            'photo_url'
         ]
 
     def get_is_open(self, obj):
@@ -231,5 +230,123 @@ class RequestListSerializer(serializers.ModelSerializer):
             'reason',
             'created_at'
         ]
+
+
+class SupplierBrandServiceCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating a new SupplierBrandService"""
+    brand_id = serializers.UUIDField(write_only=True)
+    service_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        write_only=True,
+        help_text="List of service IDs to associate with this supplier brand service"
+    )
+    sector = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    
+    class Meta:
+        model = SupplierBrandService
+        fields = [
+            'brand_id',
+            'service_ids',
+            'city',
+            'sector',
+            'latitude',
+            'longitude',
+            'price',
+        ]
+    
+    def validate_brand_id(self, value):
+        """Validate that the brand exists"""
+        try:
+            CarBrand.objects.get(brand_id=value)
+            return value
+        except CarBrand.DoesNotExist:
+            raise serializers.ValidationError("Brand not found.")
+    
+    def validate_service_ids(self, value):
+        """Validate that all service IDs exist"""
+        if not value:
+            raise serializers.ValidationError("At least one service must be provided.")
+        
+        existing_services = Service.objects.filter(service_id__in=value)
+        if existing_services.count() != len(value):
+            raise serializers.ValidationError("One or more services not found.")
+        
+        return value
+    
+    def validate(self, data):
+        """Validate that none of the selected services already exist for the given brand"""
+        # Get supplier from context
+        supplier = self.context.get('supplier')
+        if not supplier:
+            return data
+        
+        brand_id = data.get('brand_id')
+        service_ids = data.get('service_ids', [])
+        
+        if brand_id and service_ids:
+            # Convert service_ids to a set for comparison
+            service_ids_set = set(service_ids)
+            
+            # Check for existing SupplierBrandService with same supplier and brand
+            existing_entries = SupplierBrandService.objects.filter(
+                supplier=supplier,
+                brand_id=brand_id
+            ).prefetch_related('services')
+            
+            # Collect all existing service IDs for this brand
+            existing_service_ids = set()
+            for entry in existing_entries:
+                entry_service_ids = set(entry.services.values_list('service_id', flat=True))
+                existing_service_ids.update(entry_service_ids)
+            
+            # Check if any of the selected services already exist for this brand
+            overlapping_services = service_ids_set.intersection(existing_service_ids)
+            if overlapping_services:
+                # Get service names for better error message
+                overlapping_service_names = Service.objects.filter(
+                    service_id__in=overlapping_services
+                ).values_list('service_name', flat=True)
+                
+                service_names_str = ', '.join(overlapping_service_names)
+                raise serializers.ValidationError(
+                    f"The following service(s) are already associated with this brand: {service_names_str}. "
+                    "Please remove them from your selection or update the existing entry."
+                )
+        
+        return data
+    
+    def create(self, validated_data):
+        """Create a new SupplierBrandService with active=True by default"""
+        service_ids = validated_data.pop('service_ids')
+        brand_id = validated_data.pop('brand_id')
+        
+        # Get supplier from context (set by the view from authenticated user)
+        supplier = self.context.get('supplier')
+        if not supplier:
+            raise serializers.ValidationError("Supplier not found. Please ensure you are authenticated as a supplier.")
+        
+        # Handle optional price field - if None, use default 0
+        price = validated_data.pop('price', None)
+        if price is None:
+            price = 0
+        
+        # Get the brand object
+        brand = CarBrand.objects.get(brand_id=brand_id)
+        
+        # Create the SupplierBrandService with active=True
+        supplier_brand_service = SupplierBrandService.objects.create(
+            supplier=supplier,
+            brand=brand,
+            active=True,  # Set active=True by default
+            price=price,
+            **validated_data
+        )
+        
+        # Add the services (ManyToMany relationship)
+        services = Service.objects.filter(service_id__in=service_ids)
+        supplier_brand_service.services.set(services)
+        
+        return supplier_brand_service
 
 

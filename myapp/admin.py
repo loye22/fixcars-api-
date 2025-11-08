@@ -6,7 +6,14 @@ from .models import UserProfile
  
 
 admin.site.register(Tag)
-admin.site.register(CarBrand)
+
+@admin.register(CarBrand)
+class CarBrandAdmin(admin.ModelAdmin):
+    list_display = ('brand_id', 'brand_name', 'brand_photo')
+    search_fields = ('brand_name',)
+    readonly_fields = ('brand_id',)
+    ordering = ('brand_name',)
+
 admin.site.register(CoverPhoto)
 
    
@@ -25,7 +32,7 @@ class SupplierBrandServiceAdmin(admin.ModelAdmin):
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('service_name', 'category', 'service_photo')
+    list_display = ('service_id' , 'service_name', 'category', 'service_photo')
     search_fields = ('service_name',)
     list_filter = ('category',)
     filter_horizontal = ('tags',) 
