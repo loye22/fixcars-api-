@@ -17,9 +17,6 @@
 18. Move all email-related logic to the **Redis server** to handle email processing asynchronously.
 19. Implement a feature that sends an email notification for every new **registration or subscription**.
 Here’s a more natural, human-sounding version of your text:
-20. Allow mechanics to add their services by selecting from a predefined list.
-21. We have new services that Alexandra sent — these should be merged with the existing ones.
-22. Make sure the new category is included properly.
 23. Remove the icons.
 24. Enable profile editing.
 
