@@ -81,6 +81,7 @@ SERVICE_CATEGORIES = (
     ('spalatorie_auto', 'Spălătorie Auto'),
     ('climatizare_auto', 'Climatizare Auto'),
     ('caroserie_si_vopsitorie', 'Caroserie și Vopsitorie'),
+    ('electrica_auto', 'Electrica Auto'),
 )
 
 class UserProfile(models.Model):
