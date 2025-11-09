@@ -1,6 +1,6 @@
 # TODO List
 
-1. Manage multiple branches under the same card/profile.
+1. Manage multiple car brads under the same card/profile.
 2. Add address input with map integration.
 3. Enable automatic scrolling for brand listings.
 4. If all cars are included in the services, display all available brands.
@@ -9,16 +9,14 @@
 7. Set a 2-minute timer to automatically close unfinished requests.
 8. Create an evaluation screen (review screen after the service is done like  glovo).
 9. Update the tiers change service  to have two options: “Request-based” and “Fixed.”
-12. Apply the new dark theme.
-13. Remove the service photo field from the Service model in API.
-15. fix the notfcation on the ios 
-16. Integrate google map api 
-17. Create a **Sales Representative Registration Form** for the web, ensuring it is fully responsive on both mobile and desktop.
-18. Move all email-related logic to the **Redis server** to handle email processing asynchronously.
-19. Implement a feature that sends an email notification for every new **registration or subscription**.
+10. Remove the service photo field from the Service model in API.
+11. fix the notfcation on the ios 
+12. Integrate google map api 
+13. Create a **Sales Representative Registration Form** for the web, ensuring it is fully responsive on both mobile and desktop.
+14. Move all email-related logic to the **Redis server** to handle email processing asynchronously.
+15. Implement a feature that sends an email notification for every new **registration or subscription**.
 Here’s a more natural, human-sounding version of your text:
-23. Remove the icons.
-24. Enable profile editing.
+16. Enable profile editing.
 
 
  
