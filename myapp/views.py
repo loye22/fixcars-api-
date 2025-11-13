@@ -2603,3 +2603,10 @@ def reset_password_page(request):
     </body>
     </html>
     """)
+
+
+
+from django.shortcuts import render
+
+def download_page(request):
+    return render(request, 'download.html')

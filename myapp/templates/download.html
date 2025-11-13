@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fixcars – Descarcă aplicația</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .bg-dark { background-color: #000000; }
+    .text-light { color: #e5e5e5; }
+    .text-gray { color: #787878; }
+    .border-gray { border-color: #787878; }
+
+    .btn {
+      transition: transform .2s, box-shadow .2s;
+    }
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    }
+
+    /* Black logo container */
+    .logo-box {
+      background-color: #000000;
+      border: 2px solid #787878;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-dark text-light flex flex-col justify-center items-center p-6 md:p-10">
+
+  <div class="max-w-3xl w-full text-center space-y-12">
+
+    <!-- LOGO: BLACK BOX -->
+    <div class="logo-box mx-auto w-28 h-28 md:w-32 md:h-32 rounded-3xl shadow-2xl flex items-center justify-center overflow-hidden">
+      <img src="{% static 'images/fixcars.png' %}" alt="Fixcars Logo" class="w-20 h-20 md:w-24 md:h-24 object-contain">
+    </div>
+
+    <!-- TITLE -->
+    <h1 class="text-4xl md:text-6xl font-bold tracking-tight">
+      FIXCARS
+    </h1>
+
+    <!-- SUBTITLE -->
+    <p class="text-lg md:text-xl text-gray max-w-2xl mx-auto leading-relaxed">
+      Serviciul complet pentru mașina ta.<br>
+      Găsește mecanici, programează reparații și solicită asistență rutieră – oriunde, oricând.
+    </p>
+
+    <!-- DOWNLOAD BUTTONS -->
+    <div class="flex flex-col sm:flex-row gap-5 justify-center items-center">
+
+      
+<!-- App Store -->
+<a href="https://apps.apple.com/ro/app/fixcars/id6754461330?l=ro"
+   target="_blank">
+  <img src="https://developer.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-app-store.svg" 
+       alt="Download on App Store" 
+       class="h-12 w-auto">
+</a>
+ 
+<!-- Android -->
+<a href="YOUR_GOOGLE_PLAY_LINK_HERE"
+   target="_blank">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Android_robot.svg" 
+       alt="Android" 
+       class="h-12 w-auto">
+</a>
+
+    </div>
+
+    <!-- FEATURES -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+      <div class="bg-zinc-900 rounded-2xl p-5 border border-gray">
+        <h3 class="font-semibold text-lg">Găsește mecanici</h3>
+        <p class="text-gray text-sm mt-1">În apropiere, verificați, cu recenzii reale</p>
+      </div>
+      <div class="bg-zinc-900 rounded-2xl p-5 border border-gray">
+        <h3 class="font-semibold text-lg">Programează rapid</h3>
+        <p class="text-gray text-sm mt-1">Reparații, întreținere, inspecții</p>
+      </div>
+      <div class="bg-zinc-900 rounded-2xl p-5 border border-gray">
+        <h3 class="font-semibold text-lg">Asistență rutieră</h3>
+        <p class="text-gray text-sm mt-1">Tractare, pană, baterie – 24/7</p>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="mt-16 text-gray text-sm">
+      © <span id="year"></span> Charlotte for IT Services SRL. Toate drepturile rezervate.
+      <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+    </footer>
+
+  </div>
+</body>
+</html>
