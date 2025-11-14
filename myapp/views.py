@@ -2606,7 +2606,8 @@ def reset_password_page(request):
 
 
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib import messages
 
 def download_page(request):
     # Get the newest AppLink entry
@@ -2617,3 +2618,93 @@ def download_page(request):
         'android_url': android_url
     }
     return render(request, 'download.html', context)
+
+
+def sales_representatives_page(request):
+    """View to display and handle sales representative submissions"""
+    
+    # Get all representatives for display
+    representatives = SalesRepresentative.objects.all().order_by('-created_at')
+    
+    if request.method == 'POST':
+        # Get form data
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        city = request.POST.get('city', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        
+        # Validation
+        errors = []
+        
+        if not name:
+            errors.append('Numele este obligatoriu.')
+        if not email:
+            errors.append('Email-ul este obligatoriu.')
+        elif not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            errors.append('Email-ul nu este valid.')
+        
+        if not city:
+            errors.append('Orașul este obligatoriu.')
+        elif city not in [choice[0] for choice in ROMANIAN_CITIES]:
+            errors.append('Orașul selectat nu este valid.')
+        
+        if not phone:
+            errors.append('Telefonul este obligatoriu.')
+        elif not re.match(r'^\d{10}$', phone):
+            errors.append('Telefonul trebuie să conțină exact 10 cifre.')
+        
+        # Check for duplicate email
+        if email and SalesRepresentative.objects.filter(email=email).exists():
+            errors.append('Un reprezentant cu acest email există deja.')
+        
+        # Check for duplicate phone
+        if phone and SalesRepresentative.objects.filter(phone=phone).exists():
+            errors.append('Un reprezentant cu acest telefon există deja.')
+        
+        if errors:
+            # Return form with errors
+            context = {
+                'representatives': representatives,
+                'errors': errors,
+                'form_data': {
+                    'name': name,
+                    'email': email,
+                    'city': city,
+                    'phone': phone,
+                },
+                'cities': ROMANIAN_CITIES,
+            }
+            return render(request, 'sales_representatives.html', context)
+        
+        # Create new sales representative
+        try:
+            SalesRepresentative.objects.create(
+                name=name,
+                email=email,
+                city=city,
+                phone=phone,
+                approved=False  # Default to not approved
+            )
+            messages.success(request, 'Cererea ta a fost trimisă cu succes! Vei fi contactat în curând.')
+            return redirect('myapp:sales_representatives')
+        except Exception as e:
+            errors.append(f'Eroare la salvarea datelor: {str(e)}')
+            context = {
+                'representatives': representatives,
+                'errors': errors,
+                'form_data': {
+                    'name': name,
+                    'email': email,
+                    'city': city,
+                    'phone': phone,
+                },
+                'cities': ROMANIAN_CITIES,
+            }
+            return render(request, 'sales_representatives.html', context)
+    
+    # GET request - show form and list
+    context = {
+        'representatives': representatives,
+        'cities': ROMANIAN_CITIES,
+    }
+    return render(request, 'sales_representatives.html', context)

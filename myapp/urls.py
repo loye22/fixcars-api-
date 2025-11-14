@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  download_page,home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page, DeleteAccountView, ReferedByView, SupplierBrandServiceOptionsView, SupplierBrandServiceCreateView
+from .views import  download_page, sales_representatives_page, home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page, DeleteAccountView, ReferedByView, SupplierBrandServiceOptionsView, SupplierBrandServiceCreateView
 from rest_framework_simplejwt.views import TokenRefreshView 
 from .views import FirebaseTokenViewSet
 
@@ -46,4 +46,6 @@ urlpatterns = [
     path('api/delete-account/', DeleteAccountView.as_view(), name='delete_account'),
     path('delete-account/', DeleteAccountView.as_view(), name='delete_account_noapi'),
     path('download/', download_page, name='download'),
+    path('sales-representatives/', sales_representatives_page, name='sales_representatives'),
+    
 ] 

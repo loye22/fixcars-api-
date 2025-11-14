@@ -1,0 +1,146 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fixcars – Sales Representatives</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .bg-dark { background-color: #000000; }
+    .text-light { color: #e5e5e5; }
+    .text-gray { color: #787878; }
+    .border-gray { border-color: #787878; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-dark text-light p-6 md:p-10">
+
+  <div class="max-w-4xl mx-auto space-y-10">
+    
+    <!-- TITLE -->
+    <h1 class="text-center text-4xl md:text-6xl font-bold tracking-tight">
+      Sales Representatives
+    </h1>
+
+    <!-- SUCCESS MESSAGE -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="bg-green-600 text-white rounded-lg p-4 text-center">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- SUBMISSION FORM -->
+    <div class="bg-zinc-900 rounded-2xl p-6 md:p-8 border border-gray">
+      <h2 class="text-2xl font-semibold mb-6">Aplică ca Reprezentant de Vânzări</h2>
+      
+      {% if errors %}
+        <div class="bg-red-900/50 border border-red-500 rounded-lg p-4 mb-6">
+          <ul class="list-disc list-inside space-y-1">
+            {% for error in errors %}
+              <li class="text-red-300">{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <form method="POST" action="{% url 'myapp:sales_representatives' %}" class="space-y-5">
+        {% csrf_token %}
+        
+        <!-- Name Field -->
+        <div>
+          <label for="name" class="block text-sm font-medium mb-2">Nume complet *</label>
+          <input 
+            type="text" 
+            id="name" 
+            name="name" 
+            value="{% if form_data.name %}{{ form_data.name }}{% endif %}"
+            required
+            class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-3 text-light focus:outline-none focus:border-white transition-colors"
+            placeholder="Introduceți numele complet"
+          >
+        </div>
+
+        <!-- Email Field -->
+        <div>
+          <label for="email" class="block text-sm font-medium mb-2">Email *</label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            value="{% if form_data.email %}{{ form_data.email }}{% endif %}"
+            required
+            class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-3 text-light focus:outline-none focus:border-white transition-colors"
+            placeholder="exemplu@email.com"
+          >
+        </div>
+
+        <!-- City Field -->
+        <div>
+          <label for="city" class="block text-sm font-medium mb-2">Oraș *</label>
+          <select 
+            id="city" 
+            name="city" 
+            required
+            class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-3 text-light focus:outline-none focus:border-white transition-colors"
+          >
+            <option value="">Selectați orașul</option>
+            {% for city_code, city_name in cities %}
+              <option value="{{ city_code }}" {% if form_data.city == city_code %}selected{% endif %}>
+                {{ city_name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Phone Field -->
+        <div>
+          <label for="phone" class="block text-sm font-medium mb-2">Telefon (10 cifre) *</label>
+          <input 
+            type="tel" 
+            id="phone" 
+            name="phone" 
+            value="{% if form_data.phone %}{{ form_data.phone }}{% endif %}"
+            required
+            pattern="[0-9]{10}"
+            maxlength="10"
+            class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-3 text-light focus:outline-none focus:border-white transition-colors"
+            placeholder="0765413221"
+          >
+          <p class="text-gray text-xs mt-1">Introduceți exact 10 cifre (fără spații sau caractere speciale)</p>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit"
+          class="w-full bg-white text-black font-semibold py-3 rounded-lg hover:bg-gray-200 transition-colors"
+        >
+          Trimite Cererea
+        </button>
+      </form>
+    </div>
+
+
+
+    <!-- FOOTER -->
+    <footer class="mt-16 text-gray text-sm text-center">
+      © <span id="year"></span> Charlotte for IT Services SRL. Toate drepturile rezervate.
+    </footer>
+
+    <script>
+      document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+
+  </div>
+
+</body>
+</html>
