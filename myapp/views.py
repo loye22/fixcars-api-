@@ -27,6 +27,12 @@ import math
 from decimal import Decimal
 from rest_framework import viewsets
 from firebase_admin import auth as firebase_auth
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from .models import SalesRepresentative, UserProfile
 
 
 # Create your views here.
@@ -2708,3 +2714,68 @@ def sales_representatives_page(request):
         'cities': ROMANIAN_CITIES,
     }
     return render(request, 'sales_representatives.html', context)
+
+
+
+
+
+# ---------- Helper ----------
+def staff_required(view_func):
+    return user_passes_test(lambda u: u.is_staff, login_url='myapp:panel_login')(view_func)
+
+# ---------- Login Page ----------
+@csrf_exempt
+def admin_login(request):
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user and user.is_staff:
+            from django.contrib.auth import login
+            login(request, user)
+            return redirect('myapp:panel_dashboard')
+        else:
+            messages.error(request, "Credențiale invalide sau acces restricționat.")
+    return render(request, 'admin_login.html')  # create a simple login form
+
+# ---------- Dashboard ----------
+@login_required
+@staff_required
+def admin_dashboard(request):
+    pending_sales = SalesRepresentative.objects.filter(approved=False).count()
+    pending_mechanics = UserProfile.objects.filter(user_type='supplier', is_active=False).count()
+
+    sales_reps = SalesRepresentative.objects.all().order_by('-created_at')
+    mechanics = UserProfile.objects.filter(user_type='supplier').order_by('-created_at')
+
+    context = {
+        'pending_sales': pending_sales,
+        'pending_mechanics': pending_mechanics,
+        'sales_reps': sales_reps,
+        'mechanics': mechanics,
+    }
+    return render(request, 'admin_dashboard.html', context)
+
+# ---------- Accept Sales Rep ----------
+@csrf_exempt
+@login_required
+@staff_required
+def admin_accept_sales(request, rep_id):
+    rep = get_object_or_404(SalesRepresentative, representative_id=rep_id)
+    if request.method == "POST":
+        rep.approved = True
+        rep.save()
+        messages.success(request, f"Reprezentantul {rep.name} a fost acceptat.")
+    return redirect('myapp:panel_dashboard')
+
+# ---------- Activate Mechanic ----------
+@csrf_exempt
+@login_required
+@staff_required
+def admin_activate_mechanic(request, user_id):
+    mech = get_object_or_404(UserProfile, user_id=user_id, user_type='supplier')
+    if request.method == "POST":
+        mech.is_active = True
+        mech.save()
+        messages.success(request, f"Mecanicul {mech.full_name} a fost activat.")
+    return redirect('myapp:panel_dashboard')

@@ -1,0 +1,199 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fixcars – Admin</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .bg-dark { background-color: #000000; }
+    .text-light { color: #e5e5e5; }
+    .text-gray { color: #787878; }
+    .border-gray { border-color: #787878; }
+    .tab-active { @apply bg-zinc-800 border-white; }
+    .tab-inactive { @apply bg-zinc-900 border-gray hover:border-white; }
+    .btn-accept { @apply bg-green-600 hover:bg-green-500 text-white; }
+    .btn-activate { @apply bg-blue-600 hover:bg-blue-500 text-white; }
+    .badge { @apply inline-block px-2 py-1 text-xs font-semibold rounded-full; }
+  </style>
+</head>
+<body class="min-h-screen bg-dark text-light p-4 md:p-8">
+
+  <div class="max-w-6xl mx-auto space-y-8">
+
+    <!-- Header -->
+    <header class="text-center">
+      <h1 class="text-4xl md:text-5xl font-bold">Admin Dashboard</h1>
+      <p class="text-gray mt-2">Bine ai venit, {{ request.user.get_full_name|default:request.user.username }}</p>
+    </header>
+
+    <!-- Tabs -->
+    <div class="flex flex-col sm:flex-row gap-2 justify-center mb-6">
+      <button class="tab tab-sales px-6 py-3 rounded-lg border transition-colors" onclick="openTab('sales')">
+        Reprezentanți Vânzări
+        <span class="badge bg-orange-600 text-white ml-2">{{ pending_sales }}</span>
+      </button>
+      <button class="tab tab-mechanics px-6 py-3 rounded-lg border transition-colors" onclick="openTab('mechanics')">
+        Mecanicii
+        <span class="badge bg-red-600 text-white ml-2">{{ pending_mechanics }}</span>
+      </button>
+    </div>
+
+    <!-- Sales Tab -->
+    <div id="sales-tab" class="tab-content space-y-6">
+      <div class="bg-zinc-900 rounded-2xl p-6 border border-gray">
+        <h2 class="text-xl font-semibold mb-4">Reprezentanți în așteptare ({{ pending_sales }})</h2>
+
+        <!-- Filters -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <input type="text" placeholder="Caută după email" id="sales-email-filter"
+                 class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white">
+          <input type="text" placeholder="Caută după telefon" id="sales-phone-filter"
+                 class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white">
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-gray border-b border-gray">
+                <th class="text-left py-2">Nume</th>
+                <th class="text-left py-2 hidden sm:table-cell">Email</th>
+                <th class="text-left py-2 hidden md:table-cell">Telefon</th>
+                <th class="text-left py-2">Oraș</th>
+                <th class="text-left py-2">Acțiune</th>
+              </tr>
+            </thead>
+            <tbody id="sales-body">
+              {% for rep in sales_reps %}
+              <tr class="border-b border-gray/30 hover:bg-zinc-800 transition">
+                <td class="py-3">{{ rep.name }}</td>
+                <td class="py-3 hidden sm:table-cell">{{ rep.email }}</td>
+                <td class="py-3 hidden md:table-cell">{{ rep.phone }}</td>
+                <td class="py-3">{{ rep.get_city_display }}</td>
+                <td class="py-3">
+                  {% if not rep.approved %}
+                  <form method="post" action="{% url 'myapp:panel_accept_sales' rep.representative_id %}" class="inline">
+                    <button type="submit" class="btn-accept px-3 py-1 rounded text-xs">Acceptă</button>
+                  </form>
+                  {% else %}
+                  <span class="text-green-400 text-xs">Acceptat</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center py-6 text-gray">Niciun reprezentant în așteptare.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mechanics Tab -->
+    <div id="mechanics-tab" class="tab-content hidden space-y-6">
+      <div class="bg-zinc-900 rounded-2xl p-6 border border-gray">
+        <h2 class="text-xl font-semibold mb-4">Mecanici în așteptare ({{ pending_mechanics }})</h2>
+
+        <!-- Filters -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <input type="text" placeholder="Caută după email" id="mech-email-filter"
+                 class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white">
+          <input type="text" placeholder="Caută după telefon" id="mech-phone-filter"
+                 class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white">
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-gray border-b border-gray">
+                <th class="text-left py-2">Nume</th>
+                <th class="text-left py-2 hidden sm:table-cell">Email</th>
+                <th class="text-left py-2 hidden md:table-cell">Telefon</th>
+                <th class="text-left py-2">Oraș</th>
+                <th class="text-left py-2">Acțiune</th>
+              </tr>
+            </thead>
+            <tbody id="mech-body">
+              {% for mech in mechanics %}
+              <tr class="border-b border-gray/30 hover:bg-zinc-800 transition">
+                <td class="py-3">{{ mech.full_name }}</td>
+                <td class="py-3 hidden sm:table-cell">{{ mech.email }}</td>
+                <td class="py-3 hidden md:table-cell">{{ mech.phone }}</td>
+                <td class="py-3">{{ mech.get_city_display }}</td>
+                <td class="py-3">
+                  {% if not mech.is_active %}
+                  <form method="post" action="{% url 'myapp:panel_activate_mechanic' mech.user_id %}" class="inline">
+                    <button type="submit" class="btn-activate px-3 py-1 rounded text-xs">Activează</button>
+                  </form>
+                  {% else %}
+                  <span class="text-green-400 text-xs">Activ</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center py-6 text-gray">Niciun mecanic în așteptare.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-gray text-sm mt-12">
+      © <span id="year"></span> Charlotte for IT Services SRL. Toate drepturile rezervate.
+    </footer>
+  </div>
+
+  <script>
+    // Year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Tab switching
+    function openTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      document.getElementById(tab + '-tab').classList.remove('hidden');
+
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.remove('tab-active');
+        t.classList.add('tab-inactive');
+      });
+      document.querySelector('.tab-' + tab).classList.add('tab-active');
+      document.querySelector('.tab-' + tab).classList.remove('tab-inactive');
+    }
+
+    // Default open first tab
+    openTab('sales');
+
+    // Live filters
+    function setupFilter(inputId, rowSelector, colIndex) {
+      const input = document.getElementById(inputId);
+      input.addEventListener('input', () => {
+        const term = input.value.toLowerCase();
+        document.querySelectorAll(rowSelector).forEach(row => {
+          const cell = row.cells[colIndex].textContent.toLowerCase();
+          row.style.display = cell.includes(term) ? '' : 'none';
+        });
+      });
+    }
+
+    // Sales filters (email col=1, phone col=2)
+    setupFilter('sales-email-filter', '#sales-body tr', 1);
+    setupFilter('sales-phone-filter', '#sales-body tr', 2);
+
+    // Mechanics filters
+    setupFilter('mech-email-filter', '#mech-body tr', 1);
+    setupFilter('mech-phone-filter', '#mech-body tr', 2);
+  </script>
+</body>
+</html>
