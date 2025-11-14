@@ -2,198 +2,292 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fixcars – Admin</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixcars – Admin</title>
 
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Inter Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-    .bg-dark { background-color: #000000; }
-    .text-light { color: #e5e5e5; }
-    .text-gray { color: #787878; }
-    .border-gray { border-color: #787878; }
-    .tab-active { @apply bg-zinc-800 border-white; }
-    .tab-inactive { @apply bg-zinc-900 border-gray hover:border-white; }
-    .btn-accept { @apply bg-green-600 hover:bg-green-500 text-white; }
-    .btn-activate { @apply bg-blue-600 hover:bg-blue-500 text-white; }
-    .badge { @apply inline-block px-2 py-1 text-xs font-semibold rounded-full; }
-  </style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .bg-dark   { background-color: #0a0a0a; }
+        .text-light{ color: #f5f5f5; }
+        .text-muted{ color: #9ca3af; }
+        .border-muted{ border-color: #4b5563; }
+
+        /* Glass-morphism card */
+        .card {
+            background: rgba(24, 24, 27, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        /* Modal overlay */
+        .modal-overlay {
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        /* Sidebar (desktop) */
+        @media (min-width: 1024px) {
+            .sidebar { position: sticky; top: 2rem; height: calc(100vh - 4rem); }
+        }
+
+        /* Badge */
+        .badge { @apply inline-block px-2 py-0.5 text-xs font-semibold rounded-full; }
+    </style>
 </head>
-<body class="min-h-screen bg-dark text-light p-4 md:p-8">
 
-  <div class="max-w-6xl mx-auto space-y-8">
+<body class="min-h-screen bg-dark text-light">
 
-    <!-- Header -->
-    <header class="text-center">
-      <h1 class="text-4xl md:text-5xl font-bold">Admin Dashboard</h1>
-      <p class="text-gray mt-2">Bine ai venit, {{ request.user.get_full_name|default:request.user.username }}</p>
-    </header>
+<div class="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto p-4 lg:p-8">
 
-    <!-- Tabs -->
-    <div class="flex flex-col sm:flex-row gap-2 justify-center mb-6">
-      <button class="tab tab-sales px-6 py-3 rounded-lg border transition-colors" onclick="openTab('sales')">
-        Reprezentanți Vânzări
-        <span class="badge bg-orange-600 text-white ml-2">{{ pending_sales }}</span>
-      </button>
-      <button class="tab tab-mechanics px-6 py-3 rounded-lg border transition-colors" onclick="openTab('mechanics')">
-        Mecanicii
-        <span class="badge bg-red-600 text-white ml-2">{{ pending_mechanics }}</span>
-      </button>
+    <!-- ==================== SIDEBAR / TABS ==================== -->
+    <aside class="lg:w-64">
+        <div class="lg:sidebar space-y-4">
+            <h1 class="hidden lg:block text-2xl font-bold text-center mb-6">Admin Dashboard</h1>
+            <p class="hidden lg:block text-muted text-center mb-8">
+                Bine ai venit, {{ request.user.get_full_name|default:request.user.username }}
+            </p>
+
+            <nav class="flex flex-col sm:flex-row lg:flex-col gap-2">
+                <button
+                    onclick="openTab('sales')"
+                    class="tab tab-sales w-full lg:w-auto text-left px-5 py-3 rounded-lg border border-muted hover:border-white transition flex items-center justify-between bg-zinc-900 hover:bg-zinc-800"
+                >
+                    Reprezentanți Vânzări
+                    <span class="badge bg-orange-600 text-white ml-2">{{ pending_sales }}</span>
+                </button>
+
+                <button
+                    onclick="openTab('mechanics')"
+                    class="tab tab-mechanics w-full lg:w-auto text-left px-5 py-3 rounded-lg border border-muted hover:border-white transition flex items-center justify-between bg-zinc-900 hover:bg-zinc-800"
+                >
+                    Mecanicii
+                    <span class="badge bg-red-600 text-white ml-2">{{ pending_mechanics }}</span>
+                </button>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <main class="flex-1 space-y-8">
+
+        <!-- Mobile header -->
+        <header class="lg:hidden text-center">
+            <h1 class="text-3xl font-bold">Admin Dashboard</h1>
+            <p class="text-muted mt-1">
+                Bine ai venit, {{ request.user.get_full_name|default:request.user.username }}
+            </p>
+        </header>
+
+        <!-- ==================== SALES TAB ==================== -->
+        <section id="sales-tab" class="tab-content space-y-6">
+            <div class="card rounded-2xl p-6">
+                <h2 class="text-xl font-semibold mb-4">Reprezentanți în așteptare ({{ pending_sales }})</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    <input type="text" id="sales-email-filter" placeholder="Caută după email"
+                           class="w-full bg-zinc-800 border border-muted rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white transition">
+                    <input type="text" id="sales-phone-filter" placeholder="Caută după telefon"
+                           class="w-full bg-zinc-800 border border-muted rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white transition">
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-muted border-b border-muted">
+                                <th class="text-left py-2">Nume</th>
+                                <th class="text-left py-2 hidden sm:table-cell">Email</th>
+                                <th class="text-left py-2 hidden md:table-cell">Telefon</th>
+                                <th class="text-left py-2">Oraș</th>
+                                <th class="text-left py-2">Acțiune</th>
+23                            </tr>
+                        </thead>
+                        <tbody id="sales-body">
+                            {% for rep in sales_reps %}
+                            <tr class="border-b border-muted/30 hover:bg-zinc-800 transition">
+                                <td class="py-3">{{ rep.name }}</td>
+                                <td class="py-3 hidden sm:table-cell">{{ rep.email }}</td>
+                                <td class="py-3 hidden md:table-cell">{{ rep.phone }}</td>
+                                <td class="py-3">{{ rep.get_city_display }}</td>
+                                <td class="py-3">
+                                    {% if not rep.approved %}
+                                    <button
+                                        onclick="showConfirmModal(
+                                            'accept',
+                                            '{{ rep.name }}',
+                                            '{% url 'myapp:panel_accept_sales' rep.representative_id %}'
+                                        )"
+                                        class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-xs transition"
+                                    >Acceptă</button>
+                                    {% else %}
+                                    <span class="text-emerald-400 text-xs">Acceptat</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center py-6 text-muted">Niciun reprezentant în așteptare.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== MECHANICS TAB ==================== -->
+        <section id="mechanics-tab" class="tab-content hidden space-y-6">
+            <div class="card rounded-2xl p-6">
+                <h2 class="text-xl font-semibold mb-4">Mecanici în așteptare ({{ pending_mechanics }})</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    <input type="text" id="mech-email-filter" placeholder="Caută după email"
+                           class="w-full bg-zinc-800 border border-muted rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white transition">
+                    <input type="text" id="mech-phone-filter" placeholder="Caută după telefon"
+                           class="w-full bg-zinc-800 border border-muted rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white transition">
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-muted border-b border-muted">
+                                <th class="text-left py-2">Nume</th>
+                                <th class="text-left py-2 hidden sm:table-cell">Email</th>
+                                <th class="text-left py-2 hidden md:table-cell">Telefon</th>
+                                <th class="text-left py-2">Acțiune</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mech-body">
+                            {% for mech in mechanics %}
+                            <tr class="border-b border-muted/30 hover:bg-zinc-800 transition">
+                                <td class="py-3">{{ mech.full_name }}</td>
+                                <td class="py-3 hidden sm:table-cell">{{ mech.email }}</td>
+                                <td class="py-3 hidden md:table-cell">{{ mech.phone }}</td>
+                                <td class="py-3">
+                                    {% if not mech.is_active %}
+                                    <button
+                                        onclick="showConfirmModal(
+                                            'activate',
+                                            '{{ mech.full_name }}',
+                                            '{% url 'myapp:panel_activate_mechanic' mech.user_id %}'
+                                        )"
+                                        class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-xs transition"
+                                    >Activează</button>
+                                    {% else %}
+                                    <span class="text-emerald-400 text-xs">Activ</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-6 text-muted">Niciun mecanic în așteptare.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-muted text-sm mt-12">
+            © <span id="year"></span> Charlotte for IT Services SRL. Toate drepturile rezervate.
+        </footer>
+    </main>
+</div>
+
+<!-- ==================== ELEGANT CONFIRM MODAL ==================== -->
+<div id="confirm-modal" class="fixed inset-0 modal-overlay hidden flex items-center justify-center z-50">
+    <div class="bg-zinc-900 rounded-xl p-6 max-w-sm w-full border border-muted shadow-2xl transform transition-all scale-95">
+        <h3 class="text-lg font-semibold mb-3" id="modal-title"></h3>
+        <p class="text-muted mb-6" id="modal-message"></p>
+        <div class="flex justify-end gap-3">
+            <button onclick="closeModal()" class="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-light rounded transition">
+                Renunță
+            </button>
+            <form id="modal-form" method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit" id="modal-confirm-btn" class="px-4 py-2 text-white rounded transition">
+                    Confirmă
+                </button>
+            </form>
+        </div>
     </div>
+</div>
 
-    <!-- Sales Tab -->
-    <div id="sales-tab" class="tab-content space-y-6">
-      <div class="bg-zinc-900 rounded-2xl p-6 border border-gray">
-        <h2 class="text-xl font-semibold mb-4">Reprezentanți în așteptare ({{ pending_sales }})</h2>
-
-        <!-- Filters -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <input type="text" placeholder="Caută după email" id="sales-email-filter"
-                 class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white">
-          <input type="text" placeholder="Caută după telefon" id="sales-phone-filter"
-                 class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white">
-        </div>
-
-        <!-- Table -->
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="text-gray border-b border-gray">
-                <th class="text-left py-2">Nume</th>
-                <th class="text-left py-2 hidden sm:table-cell">Email</th>
-                <th class="text-left py-2 hidden md:table-cell">Telefon</th>
-                <th class="text-left py-2">Oraș</th>
-                <th class="text-left py-2">Acțiune</th>
-              </tr>
-            </thead>
-            <tbody id="sales-body">
-              {% for rep in sales_reps %}
-              <tr class="border-b border-gray/30 hover:bg-zinc-800 transition">
-                <td class="py-3">{{ rep.name }}</td>
-                <td class="py-3 hidden sm:table-cell">{{ rep.email }}</td>
-                <td class="py-3 hidden md:table-cell">{{ rep.phone }}</td>
-                <td class="py-3">{{ rep.get_city_display }}</td>
-                <td class="py-3">
-                  {% if not rep.approved %}
-                  <form method="post" action="{% url 'myapp:panel_accept_sales' rep.representative_id %}" class="inline">
-                    <button type="submit" class="btn-accept px-3 py-1 rounded text-xs">Acceptă</button>
-                  </form>
-                  {% else %}
-                  <span class="text-green-400 text-xs">Acceptat</span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="5" class="text-center py-6 text-gray">Niciun reprezentant în așteptare.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mechanics Tab -->
-    <div id="mechanics-tab" class="tab-content hidden space-y-6">
-      <div class="bg-zinc-900 rounded-2xl p-6 border border-gray">
-        <h2 class="text-xl font-semibold mb-4">Mecanici în așteptare ({{ pending_mechanics }})</h2>
-
-        <!-- Filters -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <input type="text" placeholder="Caută după email" id="mech-email-filter"
-                 class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white">
-          <input type="text" placeholder="Caută după telefon" id="mech-phone-filter"
-                 class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white">
-        </div>
-
-        <!-- Table -->
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="text-gray border-b border-gray">
-                <th class="text-left py-2">Nume</th>
-                <th class="text-left py-2 hidden sm:table-cell">Email</th>
-                <th class="text-left py-2 hidden md:table-cell">Telefon</th>
-                <th class="text-left py-2">Oraș</th>
-                <th class="text-left py-2">Acțiune</th>
-              </tr>
-            </thead>
-            <tbody id="mech-body">
-              {% for mech in mechanics %}
-              <tr class="border-b border-gray/30 hover:bg-zinc-800 transition">
-                <td class="py-3">{{ mech.full_name }}</td>
-                <td class="py-3 hidden sm:table-cell">{{ mech.email }}</td>
-                <td class="py-3 hidden md:table-cell">{{ mech.phone }}</td>
-                <td class="py-3">{{ mech.get_city_display }}</td>
-                <td class="py-3">
-                  {% if not mech.is_active %}
-                  <form method="post" action="{% url 'myapp:panel_activate_mechanic' mech.user_id %}" class="inline">
-                    <button type="submit" class="btn-activate px-3 py-1 rounded text-xs">Activează</button>
-                  </form>
-                  {% else %}
-                  <span class="text-green-400 text-xs">Activ</span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="5" class="text-center py-6 text-gray">Niciun mecanic în așteptare.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="text-center text-gray text-sm mt-12">
-      © <span id="year"></span> Charlotte for IT Services SRL. Toate drepturile rezervate.
-    </footer>
-  </div>
-
-  <script>
+<script>
     // Year
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    // Tab switching
+    // ---------- TAB / SIDEBAR ----------
     function openTab(tab) {
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-      document.getElementById(tab + '-tab').classList.remove('hidden');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById(tab + '-tab').classList.remove('hidden');
 
-      document.querySelectorAll('.tab').forEach(t => {
-        t.classList.remove('tab-active');
-        t.classList.add('tab-inactive');
-      });
-      document.querySelector('.tab-' + tab).classList.add('tab-active');
-      document.querySelector('.tab-' + tab).classList.remove('tab-inactive');
+        document.querySelectorAll('.tab').forEach(t => {
+            t.classList.remove('bg-zinc-800', 'border-white');
+            t.classList.add('bg-zinc-900', 'border-muted');
+        });
+
+        const btn = document.querySelector('.tab-' + tab);
+        btn.classList.add('bg-zinc-800', 'border-white');
+        btn.classList.remove('bg-zinc-900', 'border-muted');
     }
-
-    // Default open first tab
     openTab('sales');
 
-    // Live filters
+    // ---------- LIVE FILTERS ----------
     function setupFilter(inputId, rowSelector, colIndex) {
-      const input = document.getElementById(inputId);
-      input.addEventListener('input', () => {
-        const term = input.value.toLowerCase();
-        document.querySelectorAll(rowSelector).forEach(row => {
-          const cell = row.cells[colIndex].textContent.toLowerCase();
-          row.style.display = cell.includes(term) ? '' : 'none';
+        const input = document.getElementById(inputId);
+        input.addEventListener('input', () => {
+            const term = input.value.toLowerCase();
+            document.querySelectorAll(rowSelector).forEach(row => {
+                const cell = row.cells[colIndex].textContent.toLowerCase();
+                row.style.display = cell.includes(term) ? '' : 'none';
+            });
         });
-      });
     }
-
-    // Sales filters (email col=1, phone col=2)
     setupFilter('sales-email-filter', '#sales-body tr', 1);
     setupFilter('sales-phone-filter', '#sales-body tr', 2);
-
-    // Mechanics filters
     setupFilter('mech-email-filter', '#mech-body tr', 1);
     setupFilter('mech-phone-filter', '#mech-body tr', 2);
-  </script>
+
+    // ---------- ELEGANT MODAL ----------
+    let currentAction = '';
+
+    function showConfirmModal(action, name, url) {
+        currentAction = action;
+        const title = action === 'accept' ? 'Acceptă reprezentant' : 'Activează mecanic';
+        const message = `Ești sigur că vrei să <strong>${action === 'accept' ? 'accepți' : 'activezi'}</strong> pe <strong>${name}</strong>?`;
+
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-message').innerHTML = message;
+        document.getElementById('modal-form').action = url;
+
+        // Button colour
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+        confirmBtn.className = action === 'accept'
+            ? 'px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded transition'
+            : 'px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded transition';
+
+        document.getElementById('confirm-modal').classList.remove('hidden');
+        setTimeout(() => document.querySelector('#confirm-modal > div').classList.replace('scale-95', 'scale-100'), 10);
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('confirm-modal');
+        const card = modal.querySelector('div');
+        card.classList.replace('scale-100', 'scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+    }
+
+    // Close on overlay click
+    document.getElementById('confirm-modal').addEventListener('click', e => {
+        if (e.target === document.getElementById('confirm-modal')) closeModal();
+    });
+</script>
 </body>
 </html>
