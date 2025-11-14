@@ -354,3 +354,15 @@ class SupplierReferral(models.Model):
 
     def __str__(self):
         return f"{self.sales_representative.name} referred {self.supplier.full_name}"
+
+
+class AppLink(models.Model):
+    url = models.URLField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'app_links'
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"App Link - {self.url} ({self.timestamp})"

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SalesRepresentative, SupplierReferral, UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours, CoverPhoto, UserDevice
+from .models import SalesRepresentative, SupplierReferral, UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours, CoverPhoto, UserDevice, AppLink
 from django.contrib import admin
 from .models import UserProfile
 # Register your models here.
@@ -193,3 +193,11 @@ class SupplierReferralAdmin(admin.ModelAdmin):
         elif db_field.name == "sales_representative":
             kwargs["queryset"] = SalesRepresentative.objects.all()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+@admin.register(AppLink)
+class AppLinkAdmin(admin.ModelAdmin):
+    list_display = ('url', 'timestamp')
+    search_fields = ('url',)
+    readonly_fields = ('timestamp',)
+    ordering = ('-timestamp',)

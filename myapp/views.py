@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice, SalesRepresentative, SupplierReferral, ROMANIAN_CITIES, SECTORS
+from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice, SalesRepresentative, SupplierReferral, ROMANIAN_CITIES, SECTORS, AppLink
 from django.db import models
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
@@ -2609,4 +2609,11 @@ def reset_password_page(request):
 from django.shortcuts import render
 
 def download_page(request):
-    return render(request, 'download.html')
+    # Get the newest AppLink entry
+    app_link = AppLink.objects.first()  # Using first() because of ordering = ['-timestamp'] in Meta
+    android_url = app_link.url if app_link else "#"  # Fallback to "#" if no link exists
+    
+    context = {
+        'android_url': android_url
+    }
+    return render(request, 'download.html', context)
