@@ -19,7 +19,6 @@
         .text-muted{ color: #9ca3af; }
         .border-muted{ border-color: #4b5563; }
 
-        /* Glass-morphism card */
         .card {
             background: rgba(24, 24, 27, 0.75);
             backdrop-filter: blur(12px);
@@ -28,18 +27,15 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
 
-        /* Modal overlay */
         .modal-overlay {
             background: rgba(0,0,0,0.7);
             backdrop-filter: blur(5px);
         }
 
-        /* Sidebar (desktop) */
         @media (min-width: 1024px) {
             .sidebar { position: sticky; top: 2rem; height: calc(100vh - 4rem); }
         }
 
-        /* Badge */
         .badge { @apply inline-block px-2 py-0.5 text-xs font-semibold rounded-full; }
     </style>
 </head>
@@ -48,55 +44,104 @@
 
 <div class="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto p-4 lg:p-8">
 
-    <!-- ==================== SIDEBAR / TABS ==================== -->
-    <aside class="lg:w-64">
-        <div class="lg:sidebar space-y-4">
-            <h1 class="hidden lg:block text-2xl font-bold text-center mb-6">Admin Dashboard</h1>
-            <p class="hidden lg:block text-muted text-center mb-8">
-                Bine ai venit, {{ request.user.get_full_name|default:request.user.username }}
-            </p>
+<!-- SIDEBAR -->
+<aside class="lg:w-64">
+    <div class="lg:sidebar space-y-4">
+        <h1 class="hidden lg:block text-2xl font-bold text-center mb-6">Panou de administrare</h1>
+        <p class="hidden lg:block text-muted text-center mb-8">
+            Bine ai venit, {{ request.user.get_full_name|default:request.user.username }}
+        </p>
 
-            <nav class="flex flex-col sm:flex-row lg:flex-col gap-2">
-                <button
-                    onclick="openTab('sales')"
-                    class="tab tab-sales w-full lg:w-auto text-left px-5 py-3 rounded-lg border border-muted hover:border-white transition flex items-center justify-between bg-zinc-900 hover:bg-zinc-800"
-                >
-                    Reprezentanți Vânzări
-                    <span class="badge bg-orange-600 text-white ml-2">{{ pending_sales }}</span>
-                </button>
+        <nav class="flex flex-col sm:flex-row lg:flex-col gap-2">
+            <button onclick="openTab('sales')"
+                class="tab tab-sales w-full lg:w-auto text-left px-5 py-3 rounded-lg border border-muted hover:border-white transition flex items-center justify-between bg-zinc-900 hover:bg-zinc-800">
+                Reprezentanți Vânzări
+                <span class="badge bg-white text-black ml-2 w-6 h-6 flex items-center justify-center rounded-full">{{ pending_sales }}</span>
+            </button>
 
-                <button
-                    onclick="openTab('mechanics')"
-                    class="tab tab-mechanics w-full lg:w-auto text-left px-5 py-3 rounded-lg border border-muted hover:border-white transition flex items-center justify-between bg-zinc-900 hover:bg-zinc-800"
-                >
-                    Mecanicii
-                    <span class="badge bg-red-600 text-white ml-2">{{ pending_mechanics }}</span>
-                </button>
-            </nav>
-        </div>
-    </aside>
+            <button onclick="openTab('mechanics')"
+                class="tab tab-mechanics w-full lg:w-auto text-left px-5 py-3 rounded-lg border border-muted hover:border-white transition flex items-center justify-between bg-zinc-900 hover:bg-zinc-800">
+                Mecanicii
+                <span class="badge bg-white text-black ml-2 w-6 h-6 flex items-center justify-center rounded-full">{{ pending_mechanics }}</span>
+            </button>
+        </nav>
+    </div>
+</aside>
 
-    <!-- ==================== MAIN CONTENT ==================== -->
+
+    <!-- MAIN CONTENT -->
     <main class="flex-1 space-y-8">
 
         <!-- Mobile header -->
         <header class="lg:hidden text-center">
-            <h1 class="text-3xl font-bold">Admin Dashboard</h1>
+            <h1 class="text-3xl font-bold">Panou de administrare</h1>
             <p class="text-muted mt-1">
                 Bine ai venit, {{ request.user.get_full_name|default:request.user.username }}
             </p>
         </header>
 
-        <!-- ==================== SALES TAB ==================== -->
+
+        <!-- ====================== SHARE LINKS SECTION (ADDED HERE) ====================== -->
+        <div class="card rounded-2xl p-6 space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-semibold">Linkuri de distribuire</h2>
+                    <p class="text-sm text-muted">Apasă un icon pentru opțiunile de trimitere.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <button type="button"
+                        onclick="openShareModal('https://www.app.fixcars.ro/download/')"
+                        class="group flex flex-col items-center gap-3 focus:outline-none">
+                    <span class="w-16 h-16 rounded-full bg-zinc-800 border border-muted flex items-center justify-center transition group-hover:bg-zinc-700 group-hover:border-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="w-7 h-7 stroke-white">
+                            <path d="M12 3v12m0 0l-4-4m4 4 4-4M5 21h14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <span class="text-xs uppercase tracking-wide text-muted">Descărcare</span>
+                </button>
+
+                <button type="button"
+                        onclick="openShareModal('https://www.app.fixcars.ro/sales-representatives/')"
+                        class="group flex flex-col items-center gap-3 focus:outline-none">
+                    <span class="w-16 h-16 rounded-full bg-zinc-800 border border-muted flex items-center justify-center transition group-hover:bg-zinc-700 group-hover:border-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="w-7 h-7 stroke-white">
+                            <path d="M15.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" stroke-width="1.5"/>
+                            <path d="M4 21a6.9 6.9 0 0 1 16 0" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <span class="text-xs uppercase tracking-wide text-muted text-center">Formular vânzări</span>
+                </button>
+
+                <button type="button"
+                        onclick="openShareModal('https://buy.stripe.com/eVqdR25wK9jtffHb103gk00')"
+                        class="group flex flex-col items-center gap-3 focus:outline-none">
+                    <span class="w-16 h-16 rounded-full bg-zinc-800 border border-muted flex items-center justify-center transition group-hover:bg-zinc-700 group-hover:border-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="w-7 h-7 stroke-white">
+                            <path d="M3 7h18v10H3V7Z" stroke-width="1.5" stroke-linejoin="round"/>
+                            <path d="M3 10h18" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M7 14h2" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <span class="text-xs uppercase tracking-wide text-muted">Plată</span>
+                </button>
+            </div>
+        </div>
+        <!-- =========================================================================== -->
+
+
+        <!-- SALES TAB -->
         <section id="sales-tab" class="tab-content space-y-6">
             <div class="card rounded-2xl p-6">
                 <h2 class="text-xl font-semibold mb-4">Reprezentanți în așteptare ({{ pending_sales }})</h2>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                     <input type="text" id="sales-email-filter" placeholder="Caută după email"
-                           class="w-full bg-zinc-800 border border-muted rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white transition">
+                        class="w-full bg-zinc-800 border border-muted rounded-lg px-4 py-2 text-light">
+
                     <input type="text" id="sales-phone-filter" placeholder="Caută după telefon"
-                           class="w-full bg-zinc-800 border border-muted rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white transition">
+                        class="w-full bg-zinc-800 border border-muted rounded-lg px-4 py-2 text-light">
                 </div>
 
                 <div class="overflow-x-auto">
@@ -108,7 +153,7 @@
                                 <th class="text-left py-2 hidden md:table-cell">Telefon</th>
                                 <th class="text-left py-2">Oraș</th>
                                 <th class="text-left py-2">Acțiune</th>
-23                            </tr>
+                            </tr>
                         </thead>
                         <tbody id="sales-body">
                             {% for rep in sales_reps %}
@@ -119,14 +164,10 @@
                                 <td class="py-3">{{ rep.get_city_display }}</td>
                                 <td class="py-3">
                                     {% if not rep.approved %}
-                                    <button
-                                        onclick="showConfirmModal(
-                                            'accept',
-                                            '{{ rep.name }}',
-                                            '{% url 'myapp:panel_accept_sales' rep.representative_id %}'
-                                        )"
-                                        class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-xs transition"
-                                    >Acceptă</button>
+                                    <button onclick="showConfirmModal('accept','{{ rep.name }}','{% url 'myapp:panel_accept_sales' rep.representative_id %}')"
+                                        class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-xs transition">
+                                        Acceptă
+                                    </button>
                                     {% else %}
                                     <span class="text-emerald-400 text-xs">Acceptat</span>
                                     {% endif %}
@@ -141,16 +182,17 @@
             </div>
         </section>
 
-        <!-- ==================== MECHANICS TAB ==================== -->
+        <!-- MECHANICS TAB -->
         <section id="mechanics-tab" class="tab-content hidden space-y-6">
             <div class="card rounded-2xl p-6">
                 <h2 class="text-xl font-semibold mb-4">Mecanici în așteptare ({{ pending_mechanics }})</h2>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                     <input type="text" id="mech-email-filter" placeholder="Caută după email"
-                           class="w-full bg-zinc-800 border border-muted rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white transition">
+                        class="w-full bg-zinc-800 border border-muted rounded-lg px-4 py-2 text-light">
+
                     <input type="text" id="mech-phone-filter" placeholder="Caută după telefon"
-                           class="w-full bg-zinc-800 border border-muted rounded-lg px-4 py-2 text-light focus:outline-none focus:border-white transition">
+                        class="w-full bg-zinc-800 border border-muted rounded-lg px-4 py-2 text-light">
                 </div>
 
                 <div class="overflow-x-auto">
@@ -171,14 +213,10 @@
                                 <td class="py-3 hidden md:table-cell">{{ mech.phone }}</td>
                                 <td class="py-3">
                                     {% if not mech.is_active %}
-                                    <button
-                                        onclick="showConfirmModal(
-                                            'activate',
-                                            '{{ mech.full_name }}',
-                                            '{% url 'myapp:panel_activate_mechanic' mech.user_id %}'
-                                        )"
-                                        class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-xs transition"
-                                    >Activează</button>
+                                    <button onclick="showConfirmModal('activate','{{ mech.full_name }}','{% url 'myapp:panel_activate_mechanic' mech.user_id %}')"
+                                            class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-xs transition">
+                                        Activează
+                                    </button>
                                     {% else %}
                                     <span class="text-emerald-400 text-xs">Activ</span>
                                     {% endif %}
@@ -193,25 +231,27 @@
             </div>
         </section>
 
-        <!-- Footer -->
         <footer class="text-center text-muted text-sm mt-12">
             © <span id="year"></span> Charlotte for IT Services SRL. Toate drepturile rezervate.
         </footer>
     </main>
 </div>
 
-<!-- ==================== ELEGANT CONFIRM MODAL ==================== -->
+<!-- CONFIRM MODAL (unchanged) -->
 <div id="confirm-modal" class="fixed inset-0 modal-overlay hidden flex items-center justify-center z-50">
     <div class="bg-zinc-900 rounded-xl p-6 max-w-sm w-full border border-muted shadow-2xl transform transition-all scale-95">
         <h3 class="text-lg font-semibold mb-3" id="modal-title"></h3>
         <p class="text-muted mb-6" id="modal-message"></p>
+
         <div class="flex justify-end gap-3">
             <button onclick="closeModal()" class="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-light rounded transition">
                 Renunță
             </button>
-            <form id="modal-form" method="post" class="inline">
+
+            <form id="modal-form" method="post">
                 {% csrf_token %}
-                <button type="submit" id="modal-confirm-btn" class="px-4 py-2 text-white rounded transition">
+                <button type="submit" id="modal-confirm-btn"
+                    class="px-4 py-2 text-white rounded transition">
                     Confirmă
                 </button>
             </form>
@@ -219,11 +259,42 @@
     </div>
 </div>
 
+
+<!-- ==================== SHARE MODAL (ADDED) ==================== -->
+<div id="share-modal" class="fixed inset-0 modal-overlay hidden flex items-center justify-center z-50">
+    <div class="bg-zinc-900 rounded-xl p-6 max-w-sm w-full border border-muted shadow-2xl transform transition-all scale-95">
+        <h3 class="text-lg font-semibold mb-4">Distribuie linkul</h3>
+
+        <div class="space-y-3">
+            <button id="whatsapp-btn"
+                    class="w-full bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg transition">
+                Trimite pe WhatsApp
+            </button>
+
+            <button id="copy-btn"
+                    class="w-full bg-zinc-700 hover:bg-zinc-600 text-light px-4 py-2 rounded-lg transition">
+                Copiază linkul
+            </button>
+        </div>
+
+        <button onclick="closeShareModal()"
+                class="mt-6 w-full bg-zinc-800 hover:bg-zinc-700 text-light px-4 py-2 rounded-lg transition">
+            Închide
+        </button>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"
+     class="fixed bottom-5 right-5 bg-zinc-800 text-white px-4 py-2 rounded-lg shadow-xl hidden">
+    Link copiat în clipboard!
+</div>
+<!-- ================================================================= -->
+
+
 <script>
-    // Year
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    // ---------- TAB / SIDEBAR ----------
     function openTab(tab) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
         document.getElementById(tab + '-tab').classList.remove('hidden');
@@ -239,7 +310,7 @@
     }
     openTab('sales');
 
-    // ---------- LIVE FILTERS ----------
+
     function setupFilter(inputId, rowSelector, colIndex) {
         const input = document.getElementById(inputId);
         input.addEventListener('input', () => {
@@ -255,7 +326,7 @@
     setupFilter('mech-email-filter', '#mech-body tr', 1);
     setupFilter('mech-phone-filter', '#mech-body tr', 2);
 
-    // ---------- ELEGANT MODAL ----------
+
     let currentAction = '';
 
     function showConfirmModal(action, name, url) {
@@ -267,7 +338,6 @@
         document.getElementById('modal-message').innerHTML = message;
         document.getElementById('modal-form').action = url;
 
-        // Button colour
         const confirmBtn = document.getElementById('modal-confirm-btn');
         confirmBtn.className = action === 'accept'
             ? 'px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded transition'
@@ -284,10 +354,78 @@
         setTimeout(() => modal.classList.add('hidden'), 200);
     }
 
-    // Close on overlay click
     document.getElementById('confirm-modal').addEventListener('click', e => {
         if (e.target === document.getElementById('confirm-modal')) closeModal();
     });
+
+
+    // ==================== SHARE MODAL JS ====================
+    let currentShareLink = "";
+    let toastTimeout;
+
+    function openShareModal(link) {
+        currentShareLink = link;
+
+        document.getElementById("whatsapp-btn").onclick = () => {
+            const url = "https://wa.me/?text=" + encodeURIComponent(currentShareLink);
+            window.open(url, "_blank");
+        };
+
+        document.getElementById("copy-btn").onclick = copyShareLink;
+
+        const modal = document.getElementById("share-modal");
+        modal.classList.remove("hidden");
+
+        setTimeout(() => {
+            modal.querySelector("div").classList.replace("scale-95", "scale-100");
+        }, 10);
+    }
+
+    function closeShareModal() {
+        const modal = document.getElementById("share-modal");
+        const card = modal.querySelector("div");
+        card.classList.replace("scale-100", "scale-95");
+        setTimeout(() => modal.classList.add("hidden"), 200);
+    }
+
+    async function copyShareLink() {
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(currentShareLink);
+            } else {
+                fallbackCopy(currentShareLink);
+            }
+            showToast("Link copiat în clipboard!");
+        } catch (error) {
+            fallbackCopy(currentShareLink);
+            showToast("Linkul a fost copiat.");
+        }
+    }
+
+    function fallbackCopy(text) {
+        const tempInput = document.createElement("textarea");
+        tempInput.value = text;
+        tempInput.setAttribute("readonly", "");
+        tempInput.style.position = "absolute";
+        tempInput.style.left = "-9999px";
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.remove("hidden");
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => toast.classList.add("hidden"), 1800);
+    }
+
+    document.getElementById("share-modal").addEventListener("click", e => {
+        if (e.target === document.getElementById("share-modal")) closeShareModal();
+    });
+
 </script>
 </body>
 </html>
