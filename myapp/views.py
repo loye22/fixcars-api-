@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice, SalesRepresentative, SupplierReferral, ROMANIAN_CITIES, SECTORS, AppLink
+from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice, SalesRepresentative, SupplierReferral, ROMANIAN_CITIES, SECTORS, AppLink, JUDETE
 from django.db import models
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
@@ -2636,7 +2636,8 @@ def sales_representatives_page(request):
         # Get form data
         name = request.POST.get('name', '').strip()
         email = request.POST.get('email', '').strip()
-        city = request.POST.get('city', '').strip()
+        judet = request.POST.get('judet', '').strip()
+        address = request.POST.get('address', '').strip()
         phone = request.POST.get('phone', '').strip()
         
         # Validation
@@ -2649,10 +2650,10 @@ def sales_representatives_page(request):
         elif not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
             errors.append('Email-ul nu este valid.')
         
-        if not city:
-            errors.append('Orașul este obligatoriu.')
-        elif city not in [choice[0] for choice in ROMANIAN_CITIES]:
-            errors.append('Orașul selectat nu este valid.')
+        if not judet:
+            errors.append('Județul este obligatoriu.')
+        elif judet not in [choice[0] for choice in JUDETE]:
+            errors.append('Județul selectat nu este valid.')
         
         if not phone:
             errors.append('Telefonul este obligatoriu.')
@@ -2675,10 +2676,11 @@ def sales_representatives_page(request):
                 'form_data': {
                     'name': name,
                     'email': email,
-                    'city': city,
+                    'judet': judet,
+                    'address': address,
                     'phone': phone,
                 },
-                'cities': ROMANIAN_CITIES,
+                'judete': JUDETE,
             }
             return render(request, 'sales_representatives.html', context)
         
@@ -2687,7 +2689,8 @@ def sales_representatives_page(request):
             SalesRepresentative.objects.create(
                 name=name,
                 email=email,
-                city=city,
+                judet=judet,
+                address=address,
                 phone=phone,
                 approved=False  # Default to not approved
             )
@@ -2701,17 +2704,19 @@ def sales_representatives_page(request):
                 'form_data': {
                     'name': name,
                     'email': email,
-                    'city': city,
+                    'judet': judet,
+                    'address': address,
                     'phone': phone,
                 },
-                'cities': ROMANIAN_CITIES,
+                'judete': JUDETE,
             }
             return render(request, 'sales_representatives.html', context)
     
     # GET request - show form and list
     context = {
         'representatives': representatives,
-        'cities': ROMANIAN_CITIES,
+        'judete': JUDETE,
+        'form_data': {},
     }
     return render(request, 'sales_representatives.html', context)
 

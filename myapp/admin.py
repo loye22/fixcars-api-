@@ -158,9 +158,9 @@ class UserDeviceAdmin(admin.ModelAdmin):
 
 @admin.register(SalesRepresentative)
 class SalesRepresentativeAdmin(admin.ModelAdmin):
-    list_display = ('representative_id', 'name', 'email', 'city', 'phone', 'created_at')
-    search_fields = ('name', 'email', 'phone', 'city')
-    list_filter = ('city', 'created_at')
+    list_display = ('representative_id', 'name', 'email', 'judet', 'address', 'phone', 'created_at')
+    search_fields = ('name', 'email', 'phone', 'judet', 'address')
+    list_filter = ('judet', 'created_at')
     readonly_fields = ('representative_id', 'created_at')
     ordering = ('-created_at',)
 

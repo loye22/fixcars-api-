@@ -17,6 +17,60 @@
 15. Implement a feature that sends an email notification for every new **registration or subscription**.
 Here’s a more natural, human-sounding version of your text:
 16. Enable profile editing.
+17. Add a **Sign Up** option on the login screen.
+18. Change all occurrences of **“fixcars”** to **“fixcar”** on the login screen.
+19. Change all occurrences of **“fixcars”** to **“fixcar”** on the About Us screen.
+20. Add an option for mechanics to **edit their working hours**.
+21. Add **hide/delete review** options.
+22. Add a **Back** button to all screens.
+23. Add **Show Password** icons on the signup screen for both mechanics and clients.
+24. On the signup screen, **replace the car logo** with the **Fixcar** logo.
+25. In the dashboard (for managing and activating accounts), add a **popup** showing full salesperson/mechanic details, with options to **call** or **copy phone number**.
+26. In the salesperson registration form, change **“Oras”** to **“Județ”** and update the field to use the following list of counties:
+
+    * Alba
+    * Arad
+    * Argeș
+    * Bacău
+    * Bihor
+    * Bistrița-Năsăud
+    * Botoșani
+    * Brașov
+    * Brăila
+    * Buzău
+    * Caraș-Severin
+    * Călărași
+    * Cluj
+    * Constanța
+    * Covasna
+    * Dâmbovița
+    * Dolj
+    * Galați
+    * Giurgiu
+    * Gorj
+    * Harghita
+    * Hunedoara
+    * Ialomița
+    * Iași
+    * Ilfov
+    * Maramureș
+    * Mehedinți
+    * Mureș
+    * Neamț
+    * Olt
+    * Prahova
+    * Satu Mare
+    * Sălaj
+    * Sibiu
+    * Suceava
+    * Teleorman
+    * Timiș
+    * Tulcea
+    * Vaslui
+    * Vâlcea
+    * Vrancea
+    * Municipiul București
+27. Add a new **Address** text field in the salesperson signup form (max 100 characters).
 
 
  

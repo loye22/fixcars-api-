@@ -84,22 +84,36 @@
           >
         </div>
 
-        <!-- City Field -->
+        <!-- Judet Field -->
         <div>
-          <label for="city" class="block text-sm font-medium mb-2">Oraș *</label>
+          <label for="judet" class="block text-sm font-medium mb-2">Județ *</label>
           <select 
-            id="city" 
-            name="city" 
+            id="judet" 
+            name="judet" 
             required
             class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-3 text-light focus:outline-none focus:border-white transition-colors"
           >
-            <option value="">Selectați orașul</option>
-            {% for city_code, city_name in cities %}
-              <option value="{{ city_code }}" {% if form_data.city == city_code %}selected{% endif %}>
-                {{ city_name }}
+            <option value="">Selectați județul</option>
+            {% for judet_code, judet_name in judete %}
+              <option value="{{ judet_code }}" {% if form_data.judet == judet_code %}selected{% endif %}>
+                {{ judet_name }}
               </option>
             {% endfor %}
           </select>
+        </div>
+
+        <!-- Address Field -->
+        <div>
+          <label for="address" class="block text-sm font-medium mb-2">Adresă</label>
+          <input 
+            type="text" 
+            id="address" 
+            name="address" 
+            value="{% if form_data.address %}{{ form_data.address }}{% endif %}"
+            maxlength="200"
+            class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-3 text-light focus:outline-none focus:border-white transition-colors"
+            placeholder="Stradă, număr, bloc, apartament (max. 200 caractere)"
+          >
         </div>
 
         <!-- Phone Field -->

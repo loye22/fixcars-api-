@@ -35,6 +35,51 @@ ROMANIAN_CITIES = (
     ('Oradea', 'Oradea'),
 )
 
+JUDETE = (
+    ('Alba', 'Alba'),
+    ('Arad', 'Arad'),
+    ('Argeș', 'Argeș'),
+    ('Bacău', 'Bacău'),
+    ('Bihor', 'Bihor'),
+    ('Bistrița-Năsăud', 'Bistrița-Năsăud'),
+    ('Botoșani', 'Botoșani'),
+    ('Brașov', 'Brașov'),
+    ('Brăila', 'Brăila'),
+    ('Buzău', 'Buzău'),
+    ('Caraș-Severin', 'Caraș-Severin'),
+    ('Călărași', 'Călărași'),
+    ('Cluj', 'Cluj'),
+    ('Constanța', 'Constanța'),
+    ('Covasna', 'Covasna'),
+    ('Dâmbovița', 'Dâmbovița'),
+    ('Dolj', 'Dolj'),
+    ('Galați', 'Galați'),
+    ('Giurgiu', 'Giurgiu'),
+    ('Gorj', 'Gorj'),
+    ('Harghita', 'Harghita'),
+    ('Hunedoara', 'Hunedoara'),
+    ('Ialomița', 'Ialomița'),
+    ('Iași', 'Iași'),
+    ('Ilfov', 'Ilfov'),
+    ('Maramureș', 'Maramureș'),
+    ('Mehedinți', 'Mehedinți'),
+    ('Mureș', 'Mureș'),
+    ('Neamț', 'Neamț'),
+    ('Olt', 'Olt'),
+    ('Prahova', 'Prahova'),
+    ('Satu Mare', 'Satu Mare'),
+    ('Sălaj', 'Sălaj'),
+    ('Sibiu', 'Sibiu'),
+    ('Suceava', 'Suceava'),
+    ('Teleorman', 'Teleorman'),
+    ('Timiș', 'Timiș'),
+    ('Tulcea', 'Tulcea'),
+    ('Vaslui', 'Vaslui'),
+    ('Vâlcea', 'Vâlcea'),
+    ('Vrancea', 'Vrancea'),
+    ('Municipiul București', 'Municipiul București'),
+)
+
 SECTORS = (
     ('sector_1', 'Sector 1'),
     ('sector_2', 'Sector 2'),
@@ -326,7 +371,8 @@ class SalesRepresentative(models.Model):
     representative_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    city = models.CharField(max_length=50, choices=ROMANIAN_CITIES)
+    judet = models.CharField(max_length=50, choices=JUDETE)
+    address = models.CharField(max_length=200, blank=True, null=True)
     phone = models.CharField(
         max_length=10,
         unique=True,
