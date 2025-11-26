@@ -102,17 +102,18 @@
           </select>
         </div>
 
-        <!-- Address Field -->
+        <!-- City Field -->
         <div>
-          <label for="address" class="block text-sm font-medium mb-2">Adresă</label>
+          <label for="address" class="block text-sm font-medium mb-2">oraș *</label>
           <input 
             type="text" 
             id="address" 
             name="address" 
             value="{% if form_data.address %}{{ form_data.address }}{% endif %}"
             maxlength="200"
+            required
             class="w-full bg-zinc-800 border border-gray rounded-lg px-4 py-3 text-light focus:outline-none focus:border-white transition-colors"
-            placeholder="Stradă, număr, bloc, apartament (max. 200 caractere)"
+            placeholder="oraș"
           >
         </div>
 

@@ -500,12 +500,12 @@
 
         if (isSales) {
             if (personData.judet) fields.push({ label: "Județ", key: "judet" });
-            if (personData.address) fields.push({ label: "Adresă", key: "address" });
+            if (personData.address) fields.push({ label: "oraș", key: "address" });
             if (personData.approved) fields.push({ label: "Aprobat", key: "approved" });
             if (personData.created) fields.push({ label: "Creat la", key: "created" });
             if (personData.id) fields.push({ label: "ID reprezentant", key: "id" });
         } else {
-            if (personData.address) fields.push({ label: "Adresă", key: "address" });
+            if (personData.address) fields.push({ label: "oraș", key: "address" });
             if (personData.city) fields.push({ label: "Oraș", key: "city" });
             if (personData.sector) fields.push({ label: "Sector", key: "sector" });
             if (personData.latitude) fields.push({ label: "Latitudine", key: "latitude" });
