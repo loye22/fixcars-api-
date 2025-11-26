@@ -157,12 +157,21 @@
                         </thead>
                         <tbody id="sales-body">
                             {% for rep in sales_reps %}
-                            <tr class="border-b border-muted/30 hover:bg-zinc-800 transition">
+                            <tr class="border-b border-muted/30 hover:bg-zinc-800 transition cursor-pointer person-row"
+                                data-person-type="sales"
+                                data-name="{{ rep.name }}"
+                                data-email="{{ rep.email }}"
+                                data-phone="{{ rep.phone }}"
+                                data-judet="{{ rep.judet }}"
+                                data-address="{{ rep.address|default_if_none:'' }}"
+                                data-approved="{{ rep.approved|yesno:'Da,Nu' }}"
+                                data-created="{{ rep.created_at|date:'Y-m-d H:i' }}"
+                                data-id="{{ rep.representative_id }}">
                                 <td class="py-3">{{ rep.name }}</td>
                                 <td class="py-3 hidden sm:table-cell">{{ rep.email }}</td>
                                 <td class="py-3 hidden md:table-cell">{{ rep.phone }}</td>
                                 <td class="py-3">{{ rep.get_city_display }}</td>
-                                <td class="py-3">
+                                <td class="py-3 action-cell">
                                     {% if not rep.approved %}
                                     <button onclick="showConfirmModal('accept','{{ rep.name }}','{% url 'myapp:panel_accept_sales' rep.representative_id %}')"
                                         class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded text-xs transition">
@@ -207,11 +216,25 @@
                         </thead>
                         <tbody id="mech-body">
                             {% for mech in mechanics %}
-                            <tr class="border-b border-muted/30 hover:bg-zinc-800 transition">
+                            <tr class="border-b border-muted/30 hover:bg-zinc-800 transition cursor-pointer person-row"
+                                data-person-type="mechanic"
+                                data-name="{{ mech.full_name }}"
+                                data-email="{{ mech.email }}"
+                                data-phone="{{ mech.phone }}"
+                                data-address="{{ mech.business_address|default_if_none:'' }}"
+                                data-city="{{ mech.get_city_display }}"
+                                data-sector="{{ mech.get_sector_display }}"
+                                data-latitude="{{ mech.latitude|default_if_none:'' }}"
+                                data-longitude="{{ mech.longitude|default_if_none:'' }}"
+                                data-approval="{{ mech.get_approval_status_display }}"
+                                data-account-status="{{ mech.get_account_status_display }}"
+                                data-active="{{ mech.is_active|yesno:'Da,Nu' }}"
+                                data-verified="{{ mech.is_verified|yesno:'Da,Nu' }}"
+                                data-id="{{ mech.user_id }}">
                                 <td class="py-3">{{ mech.full_name }}</td>
                                 <td class="py-3 hidden sm:table-cell">{{ mech.email }}</td>
                                 <td class="py-3 hidden md:table-cell">{{ mech.phone }}</td>
-                                <td class="py-3">
+                                <td class="py-3 action-cell">
                                     {% if not mech.is_active %}
                                     <button onclick="showConfirmModal('activate','{{ mech.full_name }}','{% url 'myapp:panel_activate_mechanic' mech.user_id %}')"
                                             class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-xs transition">
@@ -237,9 +260,33 @@
     </main>
 </div>
 
+<!-- PERSON DETAILS MODAL -->
+<div id="person-modal" class="fixed inset-0 modal-overlay hidden flex items-center justify-center z-50">
+    <div class="bg-zinc-900 rounded-2xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto border border-muted shadow-2xl transform transition-all scale-95">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <p id="person-type-label" class="text-xs uppercase tracking-wide text-emerald-400 mb-1"></p>
+                <h3 id="person-name" class="text-xl font-semibold"></h3>
+            </div>
+            <button type="button" id="person-modal-close"
+                    class="text-muted hover:text-white transition">
+                <!-- X icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 6l12 12M18 6L6 18"/>
+                </svg>
+            </button>
+        </div>
+
+        <div id="person-fields" class="space-y-3 text-sm">
+            <!-- Filled dynamically -->
+        </div>
+    </div>
+</div>
+
+
 <!-- CONFIRM MODAL (unchanged) -->
 <div id="confirm-modal" class="fixed inset-0 modal-overlay hidden flex items-center justify-center z-50">
-    <div class="bg-zinc-900 rounded-xl p-6 max-w-sm w-full border border-muted shadow-2xl transform transition-all scale-95">
+    <div class="bg-zinc-900 rounded-xl p-6 max-w-sm w-full max-h-[85vh] overflow-y-auto border border-muted shadow-2xl transform transition-all scale-95">
         <h3 class="text-lg font-semibold mb-3" id="modal-title"></h3>
         <p class="text-muted mb-6" id="modal-message"></p>
 
@@ -262,7 +309,7 @@
 
 <!-- ==================== SHARE MODAL (ADDED) ==================== -->
 <div id="share-modal" class="fixed inset-0 modal-overlay hidden flex items-center justify-center z-50">
-    <div class="bg-zinc-900 rounded-xl p-6 max-w-sm w-full border border-muted shadow-2xl transform transition-all scale-95">
+    <div class="bg-zinc-900 rounded-xl p-6 max-w-sm w-full max-h-[85vh] overflow-y-auto border border-muted shadow-2xl transform transition-all scale-95">
         <h3 class="text-lg font-semibold mb-4">Distribuie linkul</h3>
 
         <div class="space-y-3">
@@ -425,6 +472,155 @@
     document.getElementById("share-modal").addEventListener("click", e => {
         if (e.target === document.getElementById("share-modal")) closeShareModal();
     });
+
+    // ==================== PERSON DETAILS MODAL ====================
+    const personModal = document.getElementById("person-modal");
+    const personFieldsContainer = document.getElementById("person-fields");
+    const personNameEl = document.getElementById("person-name");
+    const personTypeLabelEl = document.getElementById("person-type-label");
+
+    function openPersonModalFromRow(row) {
+        const type = row.dataset.personType;
+        const isSales = type === "sales";
+
+        const personData = { ...row.dataset };
+
+        // Header
+        personNameEl.textContent = personData.name || "";
+        personTypeLabelEl.textContent = isSales ? "Reprezentant vânzări" : "Mecanic";
+
+        // Clear previous fields
+        personFieldsContainer.innerHTML = "";
+
+        // Helper to create field row with copy (and optional call) icons
+        const fields = [];
+
+        if (personData.email) fields.push({ label: "Email", key: "email" });
+        if (personData.phone) fields.push({ label: "Telefon", key: "phone", isPhone: true });
+
+        if (isSales) {
+            if (personData.judet) fields.push({ label: "Județ", key: "judet" });
+            if (personData.address) fields.push({ label: "Adresă", key: "address" });
+            if (personData.approved) fields.push({ label: "Aprobat", key: "approved" });
+            if (personData.created) fields.push({ label: "Creat la", key: "created" });
+            if (personData.id) fields.push({ label: "ID reprezentant", key: "id" });
+        } else {
+            if (personData.address) fields.push({ label: "Adresă", key: "address" });
+            if (personData.city) fields.push({ label: "Oraș", key: "city" });
+            if (personData.sector) fields.push({ label: "Sector", key: "sector" });
+            if (personData.latitude) fields.push({ label: "Latitudine", key: "latitude" });
+            if (personData.longitude) fields.push({ label: "Longitudine", key: "longitude" });
+            if (personData.approval) fields.push({ label: "Status aprobare", key: "approval" });
+            if (personData.accountStatus) fields.push({ label: "Status cont", key: "accountStatus" });
+            if (personData.active) fields.push({ label: "Activ", key: "active" });
+            if (personData.verified) fields.push({ label: "Verificat", key: "verified" });
+            if (personData.id) fields.push({ label: "ID mecanic", key: "id" });
+        }
+
+        fields.forEach(field => {
+            const value = personData[field.key];
+            if (value === undefined || value === null || value === "") return;
+
+            const rowEl = document.createElement("div");
+            rowEl.className = "flex items-center justify-between gap-3 bg-zinc-800/60 border border-muted/60 rounded-lg px-3 py-2";
+
+            const textEl = document.createElement("div");
+            textEl.className = "min-w-0";
+            textEl.innerHTML = `<p class="text-xs text-muted">${field.label}</p>
+                                <p class="text-sm truncate">${value}</p>`;
+
+            const actionsEl = document.createElement("div");
+            actionsEl.className = "flex items-center gap-2 flex-shrink-0";
+
+            // Copy button
+            const copyBtn = document.createElement("button");
+            copyBtn.type = "button";
+            copyBtn.className = "p-1.5 rounded-full bg-zinc-900/80 hover:bg-zinc-700 text-muted hover:text-white transition";
+            copyBtn.setAttribute("data-copy-value", value);
+            copyBtn.setAttribute("aria-label", "Copiază");
+            copyBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                     class="w-4 h-4" fill="none" stroke="currentColor">
+                    <rect x="9" y="9" width="11" height="11" rx="2" ry="2" stroke-width="1.5"></rect>
+                    <path d="M5 15V7a2 2 0 0 1 2-2h8" stroke-width="1.5" stroke-linecap="round"></path>
+                </svg>`;
+            copyBtn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                const text = copyBtn.getAttribute("data-copy-value") || "";
+                try {
+                    if (navigator.clipboard && window.isSecureContext) {
+                        await navigator.clipboard.writeText(text);
+                    } else {
+                        fallbackCopy(text);
+                    }
+                    showToast("Valoare copiată în clipboard");
+                } catch {
+                    fallbackCopy(text);
+                    showToast("Valoarea a fost copiată");
+                }
+            });
+
+            actionsEl.appendChild(copyBtn);
+
+            // Call button for phone field
+            if (field.isPhone) {
+                const callBtn = document.createElement("a");
+                callBtn.href = "tel:" + value;
+                callBtn.className = "p-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white transition";
+                callBtn.setAttribute("aria-label", "Apelează");
+                callBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                         class="w-4 h-4" fill="none" stroke="currentColor">
+                        <path d="M4 5a2 2 0 0 1 2-2h1.1a1 1 0 0 1 .96.73l1.1 3.85a1 1 0 0 1-.54 1.17L7.6 9.44a11 11 0 0 0 6.96 6.96l0.69-1.98a1 1 0 0 1 1.17-.64l3.85 1.1a1 1 0 0 1 .73.96V19a2 2 0 0 1-2 2h-1C9.82 21 4 15.18 4 8V5Z"
+                              stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>`;
+                callBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    showToast("Se inițiază apelul");
+                });
+                actionsEl.appendChild(callBtn);
+            }
+
+            rowEl.appendChild(textEl);
+            rowEl.appendChild(actionsEl);
+
+            personFieldsContainer.appendChild(rowEl);
+        });
+
+        personModal.classList.remove("hidden");
+        setTimeout(() => {
+            const card = personModal.querySelector("div");
+            if (card) card.classList.replace("scale-95", "scale-100");
+        }, 10);
+    }
+
+    function closePersonModal() {
+        const card = personModal.querySelector("div");
+        if (card) card.classList.replace("scale-100", "scale-95");
+        setTimeout(() => personModal.classList.add("hidden"), 200);
+    }
+
+    // Delegate click from table rows
+    document.querySelectorAll(".person-row").forEach(row => {
+        row.addEventListener("click", (e) => {
+            // Ignore clicks on action buttons/cells so existing actions still work
+            if (e.target.closest(".action-cell") || e.target.closest("button") || e.target.closest("a")) {
+                return;
+            }
+            openPersonModalFromRow(row);
+        });
+    });
+
+    personModal.addEventListener("click", (e) => {
+        if (e.target === personModal) {
+            closePersonModal();
+        }
+    });
+
+    const personModalCloseBtn = document.getElementById("person-modal-close");
+    if (personModalCloseBtn) {
+        personModalCloseBtn.addEventListener("click", closePersonModal);
+    }
 
 </script>
 </body>
