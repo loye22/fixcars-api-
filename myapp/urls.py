@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  admin_login, download_page, sales_representatives_page, home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page, DeleteAccountView, ReferedByView, SupplierBrandServiceOptionsView, SupplierBrandServiceCreateView
+from .views import  admin_login, download_page, sales_representatives_page, privacy_policy_page, home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page, DeleteAccountView, ReferedByView, SupplierBrandServiceOptionsView, SupplierBrandServiceCreateView
 from rest_framework_simplejwt.views import TokenRefreshView 
 from .views import FirebaseTokenViewSet
 from . import views
@@ -48,6 +48,7 @@ urlpatterns = [
     path('delete-account/', DeleteAccountView.as_view(), name='delete_account_noapi'),
     path('download/', download_page, name='download'),
     path('sales-representatives/', sales_representatives_page, name='sales_representatives'),
+    path('privacy-policy/', privacy_policy_page, name='privacy_policy'),
     path('panel/login/', views.admin_login, name='panel_login'),
     path('panel/', views.admin_dashboard, name='panel_dashboard'),                   # main dashboard
     path('panel/accept-sales/<uuid:rep_id>/', views.admin_accept_sales,

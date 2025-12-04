@@ -2721,6 +2721,11 @@ def sales_representatives_page(request):
     return render(request, 'sales_representatives.html', context)
 
 
+def privacy_policy_page(request):
+    """View to display the privacy policy page"""
+    return render(request, 'privacypolicy.html')
+
+
 
 
 
