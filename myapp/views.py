@@ -1079,27 +1079,36 @@ class SupplierBrandServiceOptionsView(APIView):
 
 
 class SupplierBrandServiceCreateView(APIView):
-    """API endpoint to create a new SupplierBrandService entry"""
+    """API endpoint to create new SupplierBrandService entries"""
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
         """
-        Create a new SupplierBrandService.
+        Create multiple SupplierBrandService entries.
+        
+        Expected JSON structure:
+        {
+            "total_payloads": 2,
+            "shared_location": {
+                "city": "Constanța",
+                "sector": "sector_4",
+                "latitude": 44.462894,
+                "longitude": 26.136899,
+                "is_real_location": true
+            },
+            "payloads": [
+                {
+                    "brand_id": "6c6ef239-03bf-408e-a4d6-865f3fc2844b",
+                    "service_ids": ["e2fbeeec-bd66-48a6-862a-7e5c928b7abf"]
+                }
+            ],
+            "metadata": {
+                "price": 0.0,
+                "created_at": "2025-12-06T16:31:21.599664"
+            }
+        }
         
         The supplier is automatically determined from the authenticated user.
-        
-        Required fields:
-        - brand_id: UUID of the car brand
-        - service_ids: List of service UUIDs
-        - city: City name (from ROMANIAN_CITIES choices)
-        - latitude: Decimal latitude
-        - longitude: Decimal longitude
-        
-        Optional fields:
-        - sector: Sector name (from SECTORS choices)
-        - price: Decimal price (defaults to 0 if not provided)
-        
-        The service will be created with active=True by default.
         """
         # Get the supplier from the authenticated user
         try:
@@ -1122,15 +1131,241 @@ class SupplierBrandServiceCreateView(APIView):
                 'error': f'Error retrieving user profile: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-        # Create serializer with supplier in context
-        serializer = SupplierBrandServiceCreateSerializer(
-            data=request.data,
-            context={'supplier': supplier, 'request': request}
-        )
+        # Extract data from request
+        data = request.data
         
-        if serializer.is_valid():
+        # Validate required top-level fields
+        if 'shared_location' not in data:
+            return Response({
+                'success': False,
+                'error': 'shared_location is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if 'payloads' not in data:
+            return Response({
+                'success': False,
+                'error': 'payloads is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        shared_location = data.get('shared_location', {})
+        payloads = data.get('payloads', [])
+        metadata = data.get('metadata', {})
+        
+        # Validate shared_location fields (handle null values)
+        city = shared_location.get('city')
+        sector = shared_location.get('sector')  # Can be null
+        latitude = shared_location.get('latitude')
+        longitude = shared_location.get('longitude')
+        
+        if not city:
+            return Response({
+                'success': False,
+                'error': 'shared_location.city is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if city not in [choice[0] for choice in ROMANIAN_CITIES]:
+            return Response({
+                'success': False,
+                'error': f'Invalid city. Valid cities are: {", ".join([choice[0] for choice in ROMANIAN_CITIES])}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if sector and sector not in [choice[0] for choice in SECTORS]:
+            return Response({
+                'success': False,
+                'error': f'Invalid sector. Valid sectors are: {", ".join([choice[0] for choice in SECTORS])}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if latitude is None or longitude is None:
+            return Response({
+                'success': False,
+                'error': 'shared_location.latitude and shared_location.longitude are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            latitude = Decimal(str(latitude))
+            longitude = Decimal(str(longitude))
+        except (ValueError, TypeError):
+            return Response({
+                'success': False,
+                'error': 'shared_location.latitude and shared_location.longitude must be valid numbers'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get price from metadata, default to 0 if not provided or null
+        price = metadata.get('price')
+        if price is None:
+            price = Decimal('0.0')
+        else:
             try:
-                supplier_brand_service = serializer.save()
+                price = Decimal(str(price))
+            except (ValueError, TypeError):
+                return Response({
+                    'success': False,
+                    'error': 'metadata.price must be a valid number'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate payloads array
+        if not isinstance(payloads, list) or len(payloads) == 0:
+            return Response({
+                'success': False,
+                'error': 'payloads must be a non-empty array'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Collect all brand_ids and service_ids for validation
+        all_brand_ids = []
+        all_service_ids = []
+        
+        for idx, payload in enumerate(payloads):
+            if not isinstance(payload, dict):
+                return Response({
+                    'success': False,
+                    'error': f'payloads[{idx}] must be an object'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            brand_id = payload.get('brand_id')
+            service_ids = payload.get('service_ids', [])
+            
+            if not brand_id:
+                return Response({
+                    'success': False,
+                    'error': f'payloads[{idx}].brand_id is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not service_ids or not isinstance(service_ids, list) or len(service_ids) == 0:
+                return Response({
+                    'success': False,
+                    'error': f'payloads[{idx}].service_ids must contain at least one service_id'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            all_brand_ids.append(brand_id)
+            all_service_ids.extend(service_ids)
+        
+        # Validate all IDs are valid UUIDs
+        invalid_uuids = []
+        for brand_id in all_brand_ids:
+            if brand_id is None:
+                invalid_uuids.append(f'brand_id: null')
+            else:
+                try:
+                    uuid.UUID(str(brand_id))
+                except (ValueError, TypeError):
+                    invalid_uuids.append(f'brand_id: {brand_id}')
+        
+        for service_id in all_service_ids:
+            if service_id is None:
+                invalid_uuids.append(f'service_id: null')
+            else:
+                try:
+                    uuid.UUID(str(service_id))
+                except (ValueError, TypeError):
+                    invalid_uuids.append(f'service_id: {service_id}')
+        
+        if invalid_uuids:
+            return Response({
+                'success': False,
+                'error': 'Invalid UUID format',
+                'invalid_ids': invalid_uuids
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate all brand_ids exist in database
+        unique_brand_ids = list(set(all_brand_ids))
+        existing_brands = CarBrand.objects.filter(brand_id__in=unique_brand_ids)
+        existing_brand_ids = set(str(brand.brand_id) for brand in existing_brands)
+        
+        missing_brand_ids = [bid for bid in unique_brand_ids if str(bid) not in existing_brand_ids]
+        if missing_brand_ids:
+            return Response({
+                'success': False,
+                'error': 'One or more brand_ids do not exist in the database',
+                'missing_brand_ids': missing_brand_ids
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate all service_ids exist in database
+        unique_service_ids = list(set(all_service_ids))
+        existing_services = Service.objects.filter(service_id__in=unique_service_ids)
+        existing_service_ids = set(str(service.service_id) for service in existing_services)
+        
+        missing_service_ids = [sid for sid in unique_service_ids if str(sid) not in existing_service_ids]
+        if missing_service_ids:
+            return Response({
+                'success': False,
+                'error': 'One or more service_ids do not exist in the database',
+                'missing_service_ids': missing_service_ids
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check for duplicate entries (same supplier, brand, and overlapping services)
+        duplicate_errors = []
+        for idx, payload in enumerate(payloads):
+            brand_id = payload.get('brand_id')
+            service_ids = payload.get('service_ids', [])
+            
+            # Convert service_ids to a set for comparison
+            service_ids_set = set(str(sid) for sid in service_ids)
+            
+            # Check for existing SupplierBrandService with same supplier and brand
+            existing_entries = SupplierBrandService.objects.filter(
+                supplier=supplier,
+                brand_id=brand_id
+            ).prefetch_related('services')
+            
+            # Collect all existing service IDs for this brand
+            existing_service_ids_for_brand = set()
+            for entry in existing_entries:
+                entry_service_ids = set(str(sid) for sid in entry.services.values_list('service_id', flat=True))
+                existing_service_ids_for_brand.update(entry_service_ids)
+            
+            # Check if any of the selected services already exist for this brand
+            overlapping_services = service_ids_set.intersection(existing_service_ids_for_brand)
+            if overlapping_services:
+                # Get service names for better error message
+                overlapping_service_uuids = [uuid.UUID(sid) for sid in overlapping_services]
+                overlapping_service_names = Service.objects.filter(
+                    service_id__in=overlapping_service_uuids
+                ).values_list('service_name', flat=True)
+                
+                service_names_str = ', '.join(overlapping_service_names)
+                duplicate_errors.append({
+                    'payload_index': idx,
+                    'brand_id': str(brand_id),
+                    'error': f"The following service(s) are already associated with this brand: {service_names_str}. Please remove them from your selection or update the existing entry.",
+                    'overlapping_service_ids': list(overlapping_services)
+                })
+        
+        if duplicate_errors:
+            return Response({
+                'success': False,
+                'error': 'One or more payloads contain services that already exist for the specified brand',
+                'duplicate_errors': duplicate_errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # All validations passed, create the SupplierBrandService entries
+        created_services = []
+        errors = []
+        
+        for idx, payload in enumerate(payloads):
+            try:
+                brand_id = payload.get('brand_id')
+                service_ids = payload.get('service_ids', [])
+                
+                # Get the brand object
+                brand = CarBrand.objects.get(brand_id=brand_id)
+                
+                # Get the service objects
+                services = Service.objects.filter(service_id__in=service_ids)
+                
+                # Create the SupplierBrandService
+                supplier_brand_service = SupplierBrandService.objects.create(
+                    supplier=supplier,
+                    brand=brand,
+                    city=city,
+                    sector=sector if sector else None,
+                    latitude=latitude,
+                    longitude=longitude,
+                    price=price,
+                    active=True
+                )
+                
+                # Add the services (ManyToMany relationship)
+                supplier_brand_service.services.set(services)
                 
                 # Serialize the created object for response
                 response_serializer = SupplierBrandServiceSerializer(
@@ -1138,23 +1373,29 @@ class SupplierBrandServiceCreateView(APIView):
                     context={"request": request}
                 )
                 
-                return Response({
-                    'success': True,
-                    'message': 'Supplier brand service created successfully',
-                    'data': response_serializer.data
-                }, status=status.HTTP_201_CREATED)
+                created_services.append(response_serializer.data)
                 
             except Exception as e:
-                return Response({
-                    'success': False,
-                    'error': f'An error occurred while creating the service: {str(e)}'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
+                errors.append({
+                    'payload_index': idx,
+                    'error': str(e)
+                })
+        
+        if errors:
             return Response({
                 'success': False,
-                'error': 'Validation failed',
-                'details': serializer.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
+                'error': 'Some services failed to create',
+                'created_count': len(created_services),
+                'errors': errors,
+                'created_services': created_services
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            'success': True,
+            'message': f'Successfully created {len(created_services)} supplier brand service(s)',
+            'created_count': len(created_services),
+            'data': created_services
+        }, status=status.HTTP_201_CREATED)
 
 
 class SupplierProfileSummaryView(APIView):
