@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  admin_login, download_page, sales_representatives_page, privacy_policy_page, home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page, DeleteAccountView, ReferedByView, SupplierBrandServiceOptionsView, SupplierBrandServiceCreateView
+from .views import  admin_login, download_page, sales_representatives_page, privacy_policy_page, home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page, DeleteAccountView, ReferedByView, SupplierBrandServiceOptionsView, SupplierBrandServiceCreateView, BusinessHoursView, BusinessHoursUpdateView
 from rest_framework_simplejwt.views import TokenRefreshView 
 from .views import FirebaseTokenViewSet
 from . import views
@@ -45,6 +45,8 @@ urlpatterns = [
     path('api/password-reset/reset/', ResetPasswordView.as_view(), name='reset_password'),
     path('reset-password/', reset_password_page, name='reset_password_page'),
     path('api/delete-account/', DeleteAccountView.as_view(), name='delete_account'),
+    path('api/business-hours/', BusinessHoursView.as_view(), name='business_hours'),
+    path('api/business-hours/update/', BusinessHoursUpdateView.as_view(), name='business_hours_update'),
     path('delete-account/', DeleteAccountView.as_view(), name='delete_account_noapi'),
     path('download/', download_page, name='download'),
     path('sales-representatives/', sales_representatives_page, name='sales_representatives'),

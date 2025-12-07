@@ -21,7 +21,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer
+from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer
 from .onesignal_service import OneSignalService
 import math
 from decimal import Decimal
@@ -2439,6 +2439,144 @@ class ResetPasswordView(APIView):
             return Response({
                 'success': False,
                 'error': 'A apărut o eroare. Încearcă din nou.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BusinessHoursView(APIView):
+    """API endpoint to get business hours for the current authenticated user"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Fetch business hours for the current user"""
+        try:
+            # Get the current user's profile
+            user_profile = getattr(request.user, 'user_profile', None)
+            if not user_profile:
+                return Response({
+                    'success': False,
+                    'error': 'User profile not found.'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check if user is a supplier
+            if user_profile.user_type != 'supplier':
+                return Response({
+                    'success': False,
+                    'error': 'Business hours are only available for suppliers.'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Get or create business hours
+            business_hours, created = BusinessHours.objects.get_or_create(
+                supplier=user_profile,
+                defaults={
+                    'monday_open': '08:00',
+                    'monday_close': '19:00',
+                    'monday_closed': False,
+                    'tuesday_open': '08:00',
+                    'tuesday_close': '19:00',
+                    'tuesday_closed': False,
+                    'wednesday_open': '08:00',
+                    'wednesday_close': '19:00',
+                    'wednesday_closed': False,
+                    'thursday_open': '08:00',
+                    'thursday_close': '19:00',
+                    'thursday_closed': False,
+                    'friday_open': '08:00',
+                    'friday_close': '19:00',
+                    'friday_closed': False,
+                    'saturday_open': '09:00',
+                    'saturday_close': '17:00',
+                    'saturday_closed': True,
+                    'sunday_open': '09:00',
+                    'sunday_close': '17:00',
+                    'sunday_closed': True,
+                }
+            )
+            
+            serializer = BusinessHoursSerializer(business_hours)
+            return Response({
+                'success': True,
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'An error occurred while fetching business hours: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BusinessHoursUpdateView(APIView):
+    """API endpoint to update business hours for the current authenticated user"""
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request):
+        """Update business hours for the current user"""
+        try:
+            # Get the current user's profile
+            user_profile = getattr(request.user, 'user_profile', None)
+            if not user_profile:
+                return Response({
+                    'success': False,
+                    'error': 'User profile not found.'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check if user is a supplier
+            if user_profile.user_type != 'supplier':
+                return Response({
+                    'success': False,
+                    'error': 'Business hours can only be updated by suppliers.'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Get or create business hours
+            business_hours, created = BusinessHours.objects.get_or_create(
+                supplier=user_profile,
+                defaults={
+                    'monday_open': '08:00',
+                    'monday_close': '19:00',
+                    'monday_closed': False,
+                    'tuesday_open': '08:00',
+                    'tuesday_close': '19:00',
+                    'tuesday_closed': False,
+                    'wednesday_open': '08:00',
+                    'wednesday_close': '19:00',
+                    'wednesday_closed': False,
+                    'thursday_open': '08:00',
+                    'thursday_close': '19:00',
+                    'thursday_closed': False,
+                    'friday_open': '08:00',
+                    'friday_close': '19:00',
+                    'friday_closed': False,
+                    'saturday_open': '09:00',
+                    'saturday_close': '17:00',
+                    'saturday_closed': True,
+                    'sunday_open': '09:00',
+                    'sunday_close': '17:00',
+                    'sunday_closed': True,
+                }
+            )
+            
+            # Validate and update
+            serializer = BusinessHoursUpdateSerializer(business_hours, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                
+                # Return updated data
+                response_serializer = BusinessHoursSerializer(business_hours)
+                return Response({
+                    'success': True,
+                    'message': 'Business hours updated successfully.',
+                    'data': response_serializer.data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'An error occurred while updating business hours: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

@@ -350,3 +350,139 @@ class SupplierBrandServiceCreateSerializer(serializers.ModelSerializer):
         return supplier_brand_service
 
 
+class BusinessHoursSerializer(serializers.ModelSerializer):
+    """Serializer for BusinessHours model - used for reading business hours"""
+    monday = serializers.SerializerMethodField()
+    tuesday = serializers.SerializerMethodField()
+    wednesday = serializers.SerializerMethodField()
+    thursday = serializers.SerializerMethodField()
+    friday = serializers.SerializerMethodField()
+    saturday = serializers.SerializerMethodField()
+    sunday = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = BusinessHours
+        fields = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        read_only_fields = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    
+    def get_monday(self, obj):
+        return {
+            'open': str(obj.monday_open),
+            'close': str(obj.monday_close),
+            'closed': obj.monday_closed
+        }
+    
+    def get_tuesday(self, obj):
+        return {
+            'open': str(obj.tuesday_open),
+            'close': str(obj.tuesday_close),
+            'closed': obj.tuesday_closed
+        }
+    
+    def get_wednesday(self, obj):
+        return {
+            'open': str(obj.wednesday_open),
+            'close': str(obj.wednesday_close),
+            'closed': obj.wednesday_closed
+        }
+    
+    def get_thursday(self, obj):
+        return {
+            'open': str(obj.thursday_open),
+            'close': str(obj.thursday_close),
+            'closed': obj.thursday_closed
+        }
+    
+    def get_friday(self, obj):
+        return {
+            'open': str(obj.friday_open),
+            'close': str(obj.friday_close),
+            'closed': obj.friday_closed
+        }
+    
+    def get_saturday(self, obj):
+        return {
+            'open': str(obj.saturday_open),
+            'close': str(obj.saturday_close),
+            'closed': obj.saturday_closed
+        }
+    
+    def get_sunday(self, obj):
+        return {
+            'open': str(obj.sunday_open),
+            'close': str(obj.sunday_close),
+            'closed': obj.sunday_closed
+        }
+
+
+class BusinessHoursUpdateSerializer(serializers.Serializer):
+    """Serializer for updating BusinessHours - accepts nested day objects"""
+    monday = serializers.DictField(required=False)
+    tuesday = serializers.DictField(required=False)
+    wednesday = serializers.DictField(required=False)
+    thursday = serializers.DictField(required=False)
+    friday = serializers.DictField(required=False)
+    saturday = serializers.DictField(required=False)
+    sunday = serializers.DictField(required=False)
+    
+    def validate_day_data(self, day_data, day_name):
+        """Validate a single day's data"""
+        if not isinstance(day_data, dict):
+            raise serializers.ValidationError(f"{day_name} must be an object")
+        
+        required_fields = ['open', 'close', 'closed']
+        for field in required_fields:
+            if field not in day_data:
+                raise serializers.ValidationError(f"{day_name}.{field} is required")
+        
+        # Validate time format (HH:MM in 24-hour format)
+        for time_field in ['open', 'close']:
+            time_value = day_data[time_field]
+            if not isinstance(time_value, str):
+                raise serializers.ValidationError(f"{day_name}.{time_field} must be a string in HH:MM format")
+            
+            try:
+                # Try to parse the time
+                from datetime import datetime
+                datetime.strptime(time_value, '%H:%M')
+            except ValueError:
+                raise serializers.ValidationError(f"{day_name}.{time_field} must be in HH:MM format (24-hour system)")
+        
+        # Validate closed is boolean
+        if not isinstance(day_data['closed'], bool):
+            raise serializers.ValidationError(f"{day_name}.closed must be a boolean")
+        
+        return day_data
+    
+    def validate(self, data):
+        """Validate all day data"""
+        days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        for day in days:
+            if day in data:
+                data[day] = self.validate_day_data(data[day], day)
+        return data
+    
+    def update(self, instance, validated_data):
+        """Update the BusinessHours instance with validated data"""
+        from django.utils.dateparse import parse_time
+        
+        days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        
+        for day in days:
+            if day in validated_data:
+                day_data = validated_data[day]
+                # Parse time strings to Time objects
+                open_time = parse_time(day_data['open'])
+                close_time = parse_time(day_data['close'])
+                
+                if open_time is None or close_time is None:
+                    raise serializers.ValidationError(f"{day}: Invalid time format. Use HH:MM (24-hour system)")
+                
+                setattr(instance, f"{day}_open", open_time)
+                setattr(instance, f"{day}_close", close_time)
+                setattr(instance, f"{day}_closed", day_data['closed'])
+        
+        instance.save()
+        return instance
+
+
