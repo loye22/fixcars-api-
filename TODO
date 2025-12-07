@@ -15,10 +15,8 @@
 14. Move all email-related logic to the **Redis server** to handle email processing asynchronously.
 15. Implement a feature that sends an email notification for every new **registration or subscription**.
 16. Enable profile editing.
-20. Add an option for mechanics to **edit their working hours**.
-21. Add **hide/delete review** options.
-22. Add a **Back** button to all screens.
-23. Add **Show Password** icons on the signup screen for both mechanics and clients.
+17. Add an option for mechanics to **edit their working hours**.
+18. Add **hide/delete review** options.
 
 
  
