@@ -112,6 +112,12 @@ REQUEST_STATUSES = (
     ('completed', 'Completed'),
 )
 
+SUBSCRIPTION_PLANS = (
+    ('bronze', 'Bronze'),
+    ('silver', 'Silver'),
+    ('gold', 'Gold'),
+)
+
 
 
 SERVICE_CATEGORIES = (
@@ -185,6 +191,7 @@ class UserProfile(models.Model):
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
+    subscription_plan = models.CharField(max_length=20, choices=SUBSCRIPTION_PLANS, default='bronze')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

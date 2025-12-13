@@ -43,10 +43,10 @@ class UserProfileAdmin(admin.ModelAdmin):
     #     'user_id', 'full_name', 'email', 'phone', 'user_type', 'city', 'sector',
     #     'approval_status', 'account_status', 'is_active', 'is_verified', 'created_at'
     # )
-    list_display = ('full_name', 'is_active' ,  'email')
+    list_display = ('full_name', 'is_active', 'email', 'subscription_plan')
 
     search_fields = ('full_name', 'email', 'phone')
-    list_filter = ('user_type', 'city', 'sector', 'approval_status', 'account_status', 'is_active', 'is_verified')
+    list_filter = ('user_type', 'city', 'sector', 'approval_status', 'account_status', 'is_active', 'is_verified', 'subscription_plan')
     readonly_fields = ('user_id', 'created_at')
     filter_horizontal = ('cover_photos',)
 
