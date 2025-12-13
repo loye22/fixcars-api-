@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SalesRepresentative, SupplierReferral, UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours, CoverPhoto, UserDevice, AppLink
+from .models import SalesRepresentative, SupplierReferral, UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours, CoverPhoto, UserDevice, AppLink, Car, CarObligation
 from django.contrib import admin
 from .models import UserProfile
 # Register your models here.
@@ -201,3 +201,53 @@ class AppLinkAdmin(admin.ModelAdmin):
     search_fields = ('url',)
     readonly_fields = ('timestamp',)
     ordering = ('-timestamp',)
+
+
+@admin.register(Car)
+class CarAdmin(admin.ModelAdmin):
+    list_display = ('car_id', 'user', 'brand', 'model', 'year', 'license_plate', 'current_km', 'last_km_updated_at', 'created_at')
+    search_fields = ('license_plate', 'brand__brand_name', 'model', 'user__full_name', 'user__email')
+    list_filter = ('brand', 'year', 'created_at')
+    readonly_fields = ('car_id', 'created_at', 'updated_at')
+    ordering = ('-created_at',)
+    
+    fieldsets = (
+        ('Car Information', {
+            'fields': ('user', 'brand', 'model', 'year', 'license_plate')
+        }),
+        ('Mileage Information', {
+            'fields': ('current_km', 'last_km_updated_at')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'brand')
+
+
+@admin.register(CarObligation)
+class CarObligationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'car', 'obligation_type', 'reminder_type', 'due_date', 'created_at')
+    search_fields = ('car__license_plate', 'car__brand__brand_name', 'car__model', 'car__user__full_name', 'note')
+    list_filter = ('obligation_type', 'reminder_type', 'due_date', 'created_at')
+    readonly_fields = ('id', 'created_at', 'updated_at')
+    ordering = ('-created_at',)
+    
+    fieldsets = (
+        ('Obligation Information', {
+            'fields': ('car', 'obligation_type', 'reminder_type')
+        }),
+        ('Details', {
+            'fields': ('due_date', 'doc_url', 'note')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('car', 'car__user', 'car__brand')

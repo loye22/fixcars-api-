@@ -129,6 +129,42 @@ SERVICE_CATEGORIES = (
     ('electrica_auto', 'Electrica Auto'),
 )
 
+
+
+class ObligationDefinition(models.TextChoices):
+    # Legal Obligations
+    ITP = 'ITP', 'ITP (Inspecția Tehnică Periodică)'
+    RCA = 'RCA', 'RCA (Asigurare Obligatorie Răspundere Civilă Auto)'
+    CASCO = 'CASCO', 'CASCO (Asigurare Facultativă Auto)'
+    ROVINIETA = 'ROVINIETA', 'Rovinietă (Taxă de Drum/Vignetă)'
+    AUTO_TAX = 'AUTO_TAX', 'Impozit Auto Anual'
+
+    # Mechanical/Maintenance Obligations
+    OIL_CHANGE = 'OIL_CHANGE', 'Schimb Ulei'
+    AIR_FILTER = 'AIR_FILTER', 'Filtru de Aer'
+    CABIN_FILTER = 'CABIN_FILTER', 'Filtru de Polen/Habitaclu'
+    BRAKE_CHECK = 'BRAKE_CHECK', 'Verificare Frâne'
+    COOLANT = 'COOLANT', 'Verificare/Schimb Lichid de Răcire'
+    BATTERY = 'BATTERY', 'Verificare/Înlocuire Baterie'
+    TIRES = 'TIRES', 'Anvelope (Schimb Sezonier)'
+    WIPERS = 'WIPERS', 'Ștergătoare de Parbriz'
+
+    # Safety/Equipment Obligations
+    FIRE_EXTINGUISHER = 'FIRE_EXTINGUISHER', 'Extinctor'
+    FIRST_AID_KIT = 'FIRST_AID_KIT', 'Trusă de Prim Ajutor'
+
+
+class ReminderType(models.TextChoices):
+    LEGAL = 'LEGAL', 'Legal/Administrativ'
+    MECHANICAL = 'MECHANICAL', 'Mecanică/Întreținere'
+    SAFETY = 'SAFETY', 'Siguranță/Echipament'
+    FINANCIAL = 'FINANCIAL', 'Financiar/Asigurări'
+    SEASONAL = 'SEASONAL', 'Sezonier/Operațional'
+    OTHER = 'OTHER', 'Altele'
+
+
+
+
 class UserProfile(models.Model):
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     django_user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_profile', null=True, blank=True)
@@ -412,3 +448,102 @@ class AppLink(models.Model):
 
     def __str__(self):
         return f"App Link - {self.url} ({self.timestamp})"
+
+
+
+# --- CAR AND OBLIGATION MODELS ---
+
+class Car(models.Model):
+    """
+    Core model for the vehicle itself.
+    """
+    car_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Links to the UserProfile for ownership
+    user = models.ForeignKey(
+        'UserProfile', 
+        on_delete=models.CASCADE,
+        related_name='cars',
+        verbose_name='Owner'
+    )
+    
+    # Links to the existing CarBrand model
+    brand = models.ForeignKey(
+        'CarBrand', 
+        on_delete=models.PROTECT, 
+        related_name='cars_of_this_brand'
+    )
+    
+    model = models.CharField(max_length=100)
+    year = models.PositiveIntegerField()
+    license_plate = models.CharField(max_length=20, unique=True)
+
+    # Kilometers/Odometer Tracking
+    current_km = models.PositiveIntegerField(
+        verbose_name='Current Mileage (KM)'
+    )
+    last_km_updated_at = models.DateTimeField(
+        verbose_name='Last Mileage Update'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'cars'
+    
+    def __str__(self):
+        return f"{self.brand.brand_name} {self.model} ({self.license_plate})"
+
+
+
+class CarObligation(models.Model):
+    """
+    Tracks a specific obligation (e.g., ITP, Oil Change) for a specific car.
+    This replaces the old repetitive *_status fields.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    car = models.ForeignKey(
+        Car,
+        on_delete=models.CASCADE,
+        related_name='obligations',
+        verbose_name='Car'
+    )
+    
+    obligation_type = models.CharField(
+        max_length=50,
+        choices=ObligationDefinition.choices,
+        verbose_name='Obligation Type'
+    )
+    
+    reminder_type = models.CharField(
+        max_length=20,
+        choices=ReminderType.choices,
+        verbose_name='Reminder Type'
+    )
+    
+    doc_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name='Document URL'
+    )
+    
+    due_date = models.DateField(
+        verbose_name='Obligation Due Date'
+    )
+    
+    note = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name='Note'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'car_obligations'
+        
+    def __str__(self):
+        return f"{self.car.license_plate} - {self.get_obligation_type_display()}"
+
