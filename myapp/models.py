@@ -489,7 +489,7 @@ class Car(models.Model):
     current_km = models.PositiveIntegerField(
         verbose_name='Current Mileage (KM)'
     )
-    last_km_updated_at = models.DateTimeField(
+    last_km_updated_at = models.DateField(
         verbose_name='Last Mileage Update'
     )
 

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CarBrand, SupplierBrandService, Service, UserProfile, BusinessHours, Tag, Review, CoverPhoto, Request, Notification
+from .models import CarBrand, SupplierBrandService, Service, UserProfile, BusinessHours, Tag, Review, CoverPhoto, Request, Notification, Car, CarObligation, ObligationDefinition
 from django.utils import timezone
 
 class TagSerializer(serializers.ModelSerializer):
@@ -485,4 +485,101 @@ class BusinessHoursUpdateSerializer(serializers.Serializer):
         instance.save()
         return instance
 
+
+class CarObligationSerializer(serializers.ModelSerializer):
+    """Serializer for CarObligation model"""
+    obligation_type_display = serializers.CharField(source='get_obligation_type_display', read_only=True)
+    reminder_type_display = serializers.CharField(source='get_reminder_type_display', read_only=True)
+    due_date = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CarObligation
+        fields = [
+            'id',
+            'obligation_type',
+            'obligation_type_display',
+            'reminder_type',
+            'reminder_type_display',
+            'doc_url',
+            'due_date',
+            'note',
+            'created_at',
+            'updated_at',
+        ]
+    
+    def get_due_date(self, obj):
+        """Convert due_date to date, handling both date and datetime objects"""
+        if obj.due_date:
+            # Import here to avoid circular imports
+            from datetime import datetime, date
+            # If it's a datetime, convert to date
+            if isinstance(obj.due_date, datetime):
+                return obj.due_date.date()
+            # If it's already a date, return as-is
+            elif isinstance(obj.due_date, date):
+                return obj.due_date
+            # If it's a string or other type, try to convert
+            else:
+                return obj.due_date
+        return None
+
+
+class CarSerializer(serializers.ModelSerializer):
+    """Serializer for Car model with brand information"""
+    brand_name = serializers.CharField(source='brand.brand_name', read_only=True)
+    brand_id = serializers.UUIDField(source='brand.brand_id', read_only=True)
+    brand_photo = serializers.SerializerMethodField()
+    existing_obligations = CarObligationSerializer(many=True, read_only=True, source='obligations')
+    missing_obligations = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Car
+        fields = [
+            'car_id',
+            'brand_id',
+            'brand_name',
+            'brand_photo',
+            'model',
+            'year',
+            'license_plate',
+            'vin',
+            'current_km',
+            'last_km_updated_at',
+            'created_at',
+            'updated_at',
+            'existing_obligations',
+            'missing_obligations',
+        ]
+    
+    def get_brand_photo(self, obj):
+        """Get the full URL for the brand photo"""
+        if obj.brand and obj.brand.brand_photo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.brand.brand_photo.url)
+            return obj.brand.brand_photo.url
+        return None
+    
+    def get_missing_obligations(self, obj):
+        """Get all obligation types that don't have a CarObligation record for this car"""
+        existing_obligation_types = set(
+            obj.obligations.values_list('obligation_type', flat=True)
+        )
+        
+        # Get all obligation types from ObligationDefinition
+        all_obligation_types = set([choice[0] for choice in ObligationDefinition.choices])
+        
+        missing_types = all_obligation_types - existing_obligation_types
+        
+        # Return list of missing obligation types with their display names
+        missing_obligations = []
+        for obligation_type in missing_types:
+            # Get the display label for this obligation type
+            obligation_label = dict(ObligationDefinition.choices).get(obligation_type, obligation_type)
+            missing_obligations.append({
+                'obligation_type': obligation_type,
+                'obligation_type_display': obligation_label,
+            })
+        
+        return missing_obligations
 

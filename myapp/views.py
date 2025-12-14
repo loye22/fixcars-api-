@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice, SalesRepresentative, SupplierReferral, ROMANIAN_CITIES, SECTORS, AppLink, JUDETE
+from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice, SalesRepresentative, SupplierReferral, ROMANIAN_CITIES, SECTORS, AppLink, JUDETE, Car, CarObligation
 from django.db import models
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
@@ -21,7 +21,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer
+from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer
 from .onesignal_service import OneSignalService
 import math
 from decimal import Decimal
@@ -3156,6 +3156,45 @@ def admin_accept_sales(request, rep_id):
         rep.save()
         messages.success(request, f"Reprezentantul {rep.name} a fost acceptat.")
     return redirect('myapp:panel_dashboard')
+
+class UserCarsListView(APIView):
+    """API endpoint to fetch all cars for the current user with obligations and missing obligations"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get all cars for the authenticated user with their obligations"""
+        try:
+            # Get the user profile for the authenticated user
+            user_profile = UserProfile.objects.get(django_user=request.user)
+        except UserProfile.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'User profile not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching user profile: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        try:
+            # Get all cars for this user with related data
+            cars = Car.objects.filter(user=user_profile).select_related('brand').prefetch_related('obligations')
+            
+            # Serialize the cars with request context for absolute URLs
+            serializer = CarSerializer(cars, many=True, context={'request': request})
+            
+            return Response({
+                'success': True,
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching cars: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # ---------- Activate Mechanic ----------
 @csrf_exempt
