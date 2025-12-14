@@ -482,7 +482,8 @@ class Car(models.Model):
     
     model = models.CharField(max_length=100)
     year = models.PositiveIntegerField()
-    license_plate = models.CharField(max_length=20, unique=True)
+    license_plate = models.CharField(max_length=20, blank=True, null=True)
+    vin = models.CharField(max_length=17, blank=True, null=True, verbose_name='VIN')
 
     # Kilometers/Odometer Tracking
     current_km = models.PositiveIntegerField(
@@ -499,7 +500,8 @@ class Car(models.Model):
         db_table = 'cars'
     
     def __str__(self):
-        return f"{self.brand.brand_name} {self.model} ({self.license_plate})"
+        plate = self.license_plate if self.license_plate else "No Plate"
+        return f"{self.brand.brand_name} {self.model} ({plate})"
 
 
 
@@ -552,5 +554,6 @@ class CarObligation(models.Model):
         db_table = 'car_obligations'
         
     def __str__(self):
-        return f"{self.car.license_plate} - {self.get_obligation_type_display()}"
+        plate = self.car.license_plate if self.car.license_plate else "No Plate"
+        return f"{plate} - {self.get_obligation_type_display()}"
 

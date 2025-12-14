@@ -205,15 +205,15 @@ class AppLinkAdmin(admin.ModelAdmin):
 
 @admin.register(Car)
 class CarAdmin(admin.ModelAdmin):
-    list_display = ('car_id', 'user', 'brand', 'model', 'year', 'license_plate', 'current_km', 'last_km_updated_at', 'created_at')
-    search_fields = ('license_plate', 'brand__brand_name', 'model', 'user__full_name', 'user__email')
+    list_display = ('car_id', 'user', 'brand', 'model', 'year', 'license_plate', 'vin', 'current_km', 'last_km_updated_at', 'created_at')
+    search_fields = ('license_plate', 'vin', 'brand__brand_name', 'model', 'user__full_name', 'user__email')
     list_filter = ('brand', 'year', 'created_at')
     readonly_fields = ('car_id', 'created_at', 'updated_at')
     ordering = ('-created_at',)
     
     fieldsets = (
         ('Car Information', {
-            'fields': ('user', 'brand', 'model', 'year', 'license_plate')
+            'fields': ('user', 'brand', 'model', 'year', 'license_plate', 'vin')
         }),
         ('Mileage Information', {
             'fields': ('current_km', 'last_km_updated_at')
