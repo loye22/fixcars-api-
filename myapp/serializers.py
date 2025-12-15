@@ -524,6 +524,23 @@ class CarObligationSerializer(serializers.ModelSerializer):
         return None
 
 
+class CarObligationCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer used when creating/updating a car obligation.
+    Uses the native DateField for `due_date` so it can be written,
+    while the read-only CarObligationSerializer is used for responses.
+    """
+    class Meta:
+        model = CarObligation
+        fields = [
+            'obligation_type',
+            'reminder_type',
+            'doc_url',
+            'due_date',
+            'note',
+        ]
+
+
 class CarSerializer(serializers.ModelSerializer):
     """Serializer for Car model with brand information"""
     brand_name = serializers.CharField(source='brand.brand_name', read_only=True)
@@ -582,4 +599,86 @@ class CarSerializer(serializers.ModelSerializer):
             })
         
         return missing_obligations
+
+
+class CarCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating/updating a Car for the current user.
+    The owner (user) is taken from the authenticated request user in the view.
+    """
+    brand_id = serializers.UUIDField(write_only=True)
+
+    class Meta:
+        model = Car
+        fields = [
+            'brand_id',
+            'model',
+            'year',
+            'license_plate',
+            'vin',
+            'current_km',
+            'last_km_updated_at',
+        ]
+
+    def validate_brand_id(self, value):
+        from .models import CarBrand
+
+        try:
+            CarBrand.objects.get(brand_id=value)
+        except CarBrand.DoesNotExist:
+            raise serializers.ValidationError("Selected brand does not exist.")
+        return value
+
+    def validate(self, attrs):
+        """
+        Prevent creating duplicate cars for the same user based on:
+        - license_plate (case-insensitive), if provided
+        - vin (case-insensitive), if provided
+        """
+        user_profile = self.context.get('user_profile')
+        if not user_profile:
+            return attrs
+
+        license_plate = attrs.get('license_plate')
+        vin = attrs.get('vin')
+
+        queryset = Car.objects.filter(user=user_profile)
+        errors = {}
+
+        if license_plate:
+            if queryset.filter(license_plate__iexact=license_plate).exists():
+                errors['license_plate'] = [
+                    'A car with this license plate already exists for the current user.'
+                ]
+
+        if vin:
+            if queryset.filter(vin__iexact=vin).exists():
+                errors['vin'] = [
+                    'A car with this VIN already exists for the current user.'
+                ]
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        return attrs
+
+    def create(self, validated_data):
+        """
+        Create a Car instance for the given user (passed in context as `user_profile`).
+        """
+        from .models import CarBrand
+
+        user_profile = self.context.get('user_profile')
+        if not user_profile:
+            raise serializers.ValidationError("User profile not provided in serializer context.")
+
+        brand_id = validated_data.pop('brand_id')
+        brand = CarBrand.objects.get(brand_id=brand_id)
+
+        car = Car.objects.create(
+            user=user_profile,
+            brand=brand,
+            **validated_data,
+        )
+        return car
 

@@ -21,7 +21,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer
+from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer, CarObligationSerializer, CarObligationCreateSerializer, CarCreateSerializer
 from .onesignal_service import OneSignalService
 import math
 from decimal import Decimal
@@ -3194,6 +3194,116 @@ class UserCarsListView(APIView):
                 'success': False,
                 'error': f'Error fetching cars: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CarObligationCreateView(APIView):
+    """
+    API endpoint to add a new obligation for a specific car
+    that belongs to the currently authenticated user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, car_id):
+        # Ensure the authenticated user has a UserProfile
+        try:
+            user_profile = UserProfile.objects.get(django_user=request.user)
+        except UserProfile.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "error": "User profile not found",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": f"Error fetching user profile: {str(e)}",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Ensure the car exists and is owned by the current user
+        from django.shortcuts import get_object_or_404
+
+        car = get_object_or_404(Car, car_id=car_id, user=user_profile)
+
+        # Validate and create the obligation
+        serializer = CarObligationCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "success": False,
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        obligation = serializer.save(car=car)
+        response_serializer = CarObligationSerializer(obligation)
+
+        return Response(
+            {
+                "success": True,
+                "data": response_serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class UserCarCreateView(APIView):
+    """
+    API endpoint to create a new car for the currently authenticated user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Ensure the authenticated user has a UserProfile
+        try:
+            user_profile = UserProfile.objects.get(django_user=request.user)
+        except UserProfile.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "error": "User profile not found",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": f"Error fetching user profile: {str(e)}",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        serializer = CarCreateSerializer(
+            data=request.data,
+            context={"user_profile": user_profile},
+        )
+
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "success": False,
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        car = serializer.save()
+        # Re-use CarSerializer for response (includes obligations / missing obligations)
+        response_serializer = CarSerializer(car, context={"request": request})
+
+        return Response(
+            {
+                "success": True,
+                "data": response_serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 # ---------- Activate Mechanic ----------
