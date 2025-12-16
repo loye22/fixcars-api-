@@ -682,3 +682,103 @@ class CarCreateSerializer(serializers.ModelSerializer):
         )
         return car
 
+
+class CarUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating a Car for the current user.
+    Excludes the current car instance from duplicate checks.
+    """
+    brand_id = serializers.UUIDField(write_only=True, required=False)
+
+    class Meta:
+        model = Car
+        fields = [
+            'brand_id',
+            'model',
+            'year',
+            'license_plate',
+            'vin',
+            'current_km',
+            'last_km_updated_at',
+        ]
+
+    def validate_brand_id(self, value):
+        from .models import CarBrand
+
+        # Allow None for optional updates
+        if value is None:
+            return value
+
+        try:
+            CarBrand.objects.get(brand_id=value)
+        except CarBrand.DoesNotExist:
+            raise serializers.ValidationError("Selected brand does not exist.")
+        return value
+
+    def validate(self, attrs):
+        """
+        Prevent updating to duplicate license_plate or vin for the same user,
+        excluding the current car instance from the check.
+        """
+        user_profile = self.context.get('user_profile')
+        car_instance = self.instance  # The car being updated
+        
+        if not user_profile:
+            return attrs
+
+        license_plate = attrs.get('license_plate')
+        vin = attrs.get('vin')
+
+        # Exclude the current car from duplicate checks
+        queryset = Car.objects.filter(user=user_profile)
+        if car_instance:
+            queryset = queryset.exclude(car_id=car_instance.car_id)
+        
+        errors = {}
+
+        # Only check if license_plate is being updated and has a non-empty value
+        if license_plate is not None:
+            license_plate_value = license_plate.strip() if isinstance(license_plate, str) else license_plate
+            if license_plate_value:
+                if queryset.filter(license_plate__iexact=license_plate).exists():
+                    errors['license_plate'] = [
+                        'A car with this license plate already exists for the current user.'
+                    ]
+
+        # Only check if vin is being updated and has a non-empty value
+        if vin is not None:
+            vin_value = vin.strip() if isinstance(vin, str) else vin
+            if vin_value:
+                if queryset.filter(vin__iexact=vin).exists():
+                    errors['vin'] = [
+                        'A car with this VIN already exists for the current user.'
+                    ]
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        return attrs
+
+    def update(self, instance, validated_data):
+        """
+        Update a Car instance.
+        """
+        from .models import CarBrand
+
+        # Handle brand_id if provided (it's popped to prevent it from being set as a model attribute)
+        brand_id = validated_data.pop('brand_id', None)
+        if brand_id is not None:
+            # If brand_id is provided, update the brand
+            try:
+                brand = CarBrand.objects.get(brand_id=brand_id)
+                instance.brand = brand
+            except CarBrand.DoesNotExist:
+                raise serializers.ValidationError({"brand_id": "Selected brand does not exist."})
+
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
+

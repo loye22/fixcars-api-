@@ -21,7 +21,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer, CarObligationSerializer, CarObligationCreateSerializer, CarCreateSerializer
+from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer, CarObligationSerializer, CarObligationCreateSerializer, CarCreateSerializer, CarUpdateSerializer
 from .onesignal_service import OneSignalService
 import math
 from decimal import Decimal
@@ -3303,6 +3303,92 @@ class UserCarCreateView(APIView):
                 "data": response_serializer.data,
             },
             status=status.HTTP_201_CREATED,
+        )
+
+
+class UserCarUpdateView(APIView):
+    """
+    API endpoint to update a car for the currently authenticated user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, car_id):
+        """
+        Update a car (full update) for the authenticated user.
+        """
+        return self._update_car(request, car_id, partial=False)
+
+    def patch(self, request, car_id):
+        """
+        Partially update a car for the authenticated user.
+        """
+        return self._update_car(request, car_id, partial=True)
+
+    def _update_car(self, request, car_id, partial=False):
+        """
+        Helper method to handle both PUT and PATCH requests.
+        """
+        # Ensure the authenticated user has a UserProfile
+        try:
+            user_profile = UserProfile.objects.get(django_user=request.user)
+        except UserProfile.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "error": "User profile not found",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": f"Error fetching user profile: {str(e)}",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Ensure the car exists and is owned by the current user
+        from django.shortcuts import get_object_or_404
+
+        try:
+            car = Car.objects.get(car_id=car_id, user=user_profile)
+        except Car.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Car not found or you do not have permission to update it.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate and update the car
+        serializer = CarUpdateSerializer(
+            car,
+            data=request.data,
+            partial=partial,
+            context={"user_profile": user_profile},
+        )
+
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "success": False,
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        updated_car = serializer.save()
+        # Re-use CarSerializer for response (includes obligations / missing obligations)
+        response_serializer = CarSerializer(updated_car, context={"request": request})
+
+        return Response(
+            {
+                "success": True,
+                "data": response_serializer.data,
+            },
+            status=status.HTTP_200_OK,
         )
 
 
