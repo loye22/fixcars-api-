@@ -21,7 +21,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer, CarObligationSerializer, CarObligationCreateSerializer, CarCreateSerializer, CarUpdateSerializer
+from .serializers import AddCarObligationSerializer,  CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer, CarObligationSerializer, CarObligationCreateSerializer, CarCreateSerializer, CarUpdateSerializer
 from .onesignal_service import OneSignalService
 import math
 from decimal import Decimal
@@ -3455,3 +3455,49 @@ def admin_activate_mechanic(request, user_id):
         mech.save()
         messages.success(request, f"Mecanicul {mech.full_name} a fost activat.")
     return redirect('myapp:panel_dashboard')
+
+
+# views.py
+
+class AddCarObligationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            user_profile = UserProfile.objects.get(django_user=request.user)
+            current_car = Car.objects.filter(user=user_profile).order_by('-created_at').first()
+            
+            if not current_car:
+                return Response({
+                    "success": False,
+                    "message": "No current car found"
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # --- DUPLICATE CHECK START ---
+            obligation_type = request.data.get('obligation_type')
+            
+            if CarObligation.objects.filter(car=current_car, obligation_type=obligation_type).exists():
+                return Response({
+                    "success": False,
+                    "message": f"An obligation of type '{obligation_type}' already exists for this car."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            # --- DUPLICATE CHECK END ---
+
+            serializer = AddCarObligationSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(car=current_car)
+                return Response({
+                    "success": True,
+                    "message": "Obligation added successfully"
+                }, status=status.HTTP_201_CREATED)
+            
+            return Response({
+                "success": False,
+                "errors": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({
+                "success": False,
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

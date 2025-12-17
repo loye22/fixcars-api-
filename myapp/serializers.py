@@ -793,3 +793,23 @@ class CarUpdateSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+
+
+
+# serializers.py
+
+class AddCarObligationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CarObligation
+        fields = [
+            'obligation_type', 
+            'reminder_type', 
+            'due_date', 
+            'doc_url', 
+            'note'
+        ]
+        extra_kwargs = {
+            'obligation_type': {'required': True},
+            'reminder_type': {'required': True},
+            'due_date': {'required': True},
+        }

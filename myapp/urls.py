@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  admin_login, download_page, sales_representatives_page, privacy_policy_page, home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page, DeleteAccountView, ReferedByView, SupplierBrandServiceOptionsView, SupplierBrandServiceCreateView, BusinessHoursView, BusinessHoursUpdateView, UserCarsListView, CarObligationCreateView, UserCarCreateView, UserCarUpdateView, InitCarDetailsUpdateView
+from .views import    AddCarObligationView,admin_login, download_page, sales_representatives_page, privacy_policy_page, home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page, DeleteAccountView, ReferedByView, SupplierBrandServiceOptionsView, SupplierBrandServiceCreateView, BusinessHoursView, BusinessHoursUpdateView, UserCarsListView, CarObligationCreateView, UserCarCreateView, UserCarUpdateView, InitCarDetailsUpdateView
 from rest_framework_simplejwt.views import TokenRefreshView 
 from .views import FirebaseTokenViewSet
 from . import views
@@ -62,5 +62,7 @@ urlpatterns = [
          name='panel_accept_sales'),                                                # accept a rep
     path('panel/activate-mechanic/<uuid:user_id>/', views.admin_activate_mechanic,
          name='panel_activate_mechanic'),
+
+         path('api/add-car-obligation/', AddCarObligationView.as_view(), name='add_car_obligation'),
     
 ] 
