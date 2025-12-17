@@ -3392,6 +3392,58 @@ class UserCarUpdateView(APIView):
         )
 
 
+class InitCarDetailsUpdateView(APIView):
+    """
+    API endpoint to initialize the car details update form.
+    Returns the user's current car (if exists) and all available car brands.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Get the user's current car and all car brands"""
+        try:
+            # Get the user profile for the authenticated user
+            user_profile = UserProfile.objects.get(django_user=request.user)
+        except UserProfile.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'User profile not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching user profile: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        try:
+            # Get the user's first/most recent car (ordered by created_at descending)
+            user_car = Car.objects.filter(user=user_profile).select_related('brand').prefetch_related('obligations').order_by('-created_at').first()
+            
+            # Serialize the car if it exists
+            car_data = None
+            if user_car:
+                car_serializer = CarSerializer(user_car, context={'request': request})
+                car_data = car_serializer.data
+            
+            # Get all car brands
+            brands_qs = CarBrand.objects.all().order_by('brand_name')
+            brand_serializer = CarBrandSerializer(brands_qs, many=True, context={"request": request})
+            
+            return Response({
+                'success': True,
+                'data': {
+                    'current_car': car_data,
+                    'available_brands': brand_serializer.data
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Error fetching car details: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 # ---------- Activate Mechanic ----------
 @csrf_exempt
 @login_required

@@ -8,6 +8,8 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ['tag_id', 'tag_name']
 
 class CarBrandSerializer(serializers.ModelSerializer):
+    brand_photo = serializers.SerializerMethodField()
+    
     class Meta:
         model = CarBrand
         fields = [
@@ -15,6 +17,15 @@ class CarBrandSerializer(serializers.ModelSerializer):
             "brand_name",
             "brand_photo",
         ]
+    
+    def get_brand_photo(self, obj):
+        """Get the full URL for the brand photo"""
+        if obj.brand_photo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.brand_photo.url)
+            return obj.brand_photo.url
+        return None
 
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
