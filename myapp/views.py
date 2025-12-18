@@ -443,7 +443,7 @@ class SupplierSignupView(APIView):
                 longitude=lng,
                 business_address=business_address,
                 bio=bio,
-                is_active=False,  # Default to False for suppliers
+                is_active=True,  # Default to True for suppliers
                 is_verified=False  # Default to False for suppliers
             )
             
