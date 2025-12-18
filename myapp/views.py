@@ -946,8 +946,17 @@ class ServicesView(APIView):
         # Sort by distance (closest first)
         sorted_services = sorted(qs, key=lambda x: x.distance_km)
         
+        # Deduplicate by supplier_id (keep first occurrence - closest supplier)
+        seen_supplier_ids = set()
+        unique_services = []
+        for service in sorted_services:
+            supplier_id = str(service.supplier.user_id)
+            if supplier_id not in seen_supplier_ids:
+                seen_supplier_ids.add(supplier_id)
+                unique_services.append(service)
+        
         # Limit to first 30 results
-        limited_services = sorted_services[:30]
+        limited_services = unique_services[:30]
         
         serializer = SupplierBrandServiceSerializer(limited_services, many=True)
         return Response({
