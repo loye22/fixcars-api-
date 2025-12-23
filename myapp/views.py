@@ -21,7 +21,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import AddCarObligationSerializer,  CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer, CarObligationSerializer, CarObligationCreateSerializer, CarCreateSerializer, CarUpdateSerializer
+from .serializers import AddCarObligationSerializer,  CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer, CarObligationSerializer, CarObligationCreateSerializer, CarObligationUpdateByIdSerializer, CarCreateSerializer, CarUpdateSerializer
 from .onesignal_service import OneSignalService
 import math
 from decimal import Decimal
@@ -3318,6 +3318,104 @@ class CarObligationDeleteView(APIView):
             {
                 "success": True,
                 "message": "Obligation deleted successfully.",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class UpdateCarObligationByIdView(APIView):
+    """
+    Update a car obligation by its ID for the authenticated user's car.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Validate obligation_id presence
+        obligation_id = request.data.get("obligation_id")
+        if not obligation_id:
+            return Response(
+                {
+                    "success": False,
+                    "error": "obligation_id is required.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate obligation_id format (must be a valid UUID)
+        try:
+            uuid.UUID(str(obligation_id))
+        except (ValueError, TypeError, AttributeError):
+            return Response(
+                {
+                    "success": False,
+                    "error": "obligation_id must be a valid UUID.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Ensure the authenticated user has a UserProfile
+        try:
+            user_profile = UserProfile.objects.get(django_user=request.user)
+        except UserProfile.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "error": "User profile not found",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": f"Error fetching user profile: {str(e)}",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Fetch obligation and ensure it belongs to a car owned by this user
+        try:
+            obligation = CarObligation.objects.select_related("car", "car__user").get(id=obligation_id)
+        except CarObligation.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Obligation not found.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if obligation.car.user != user_profile:
+            return Response(
+                {
+                    "success": False,
+                    "error": "You do not have permission to update this obligation.",
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = CarObligationUpdateByIdSerializer(
+            obligation,
+            data=request.data,
+            partial=False,  # require the required fields defined in serializer
+        )
+
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "success": False,
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        obligation = serializer.save()
+        response_serializer = CarObligationSerializer(obligation)
+
+        return Response(
+            {
+                "success": True,
+                "data": response_serializer.data,
             },
             status=status.HTTP_200_OK,
         )

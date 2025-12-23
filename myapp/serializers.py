@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CarBrand, SupplierBrandService, Service, UserProfile, BusinessHours, Tag, Review, CoverPhoto, Request, Notification, Car, CarObligation, ObligationDefinition
+from .models import CarBrand, SupplierBrandService, Service, UserProfile, BusinessHours, Tag, Review, CoverPhoto, Request, Notification, Car, CarObligation, ObligationDefinition, ReminderType
 from django.utils import timezone
 
 class TagSerializer(serializers.ModelSerializer):
@@ -548,6 +548,28 @@ class CarObligationCreateSerializer(serializers.ModelSerializer):
             'reminder_type',
             'doc_url',
             'due_date',
+            'note',
+        ]
+
+
+class CarObligationUpdateByIdSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating an existing car obligation by its ID.
+    Only allows updating the specified writable fields.
+    """
+    obligation_type = serializers.ChoiceField(choices=ObligationDefinition.choices, required=True)
+    reminder_type = serializers.ChoiceField(choices=ReminderType.choices, required=True)
+    due_date = serializers.DateField(required=True)
+    doc_url = serializers.URLField(required=False, allow_null=True, allow_blank=True)
+    note = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+    class Meta:
+        model = CarObligation
+        fields = [
+            'obligation_type',
+            'reminder_type',
+            'due_date',
+            'doc_url',
             'note',
         ]
 
