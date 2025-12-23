@@ -170,6 +170,29 @@ class ReminderType(models.TextChoices):
 
 
 
+# Maps CarObligation types to Service categories
+OBLIGATION_TO_SERVICE_MAP = {
+    # Mechanical Category
+    ObligationDefinition.OIL_CHANGE: 'mecanic_auto',
+    ObligationDefinition.AIR_FILTER: 'mecanic_auto',
+    ObligationDefinition.CABIN_FILTER: 'mecanic_auto',
+    ObligationDefinition.BRAKE_CHECK: 'mecanic_auto',
+    ObligationDefinition.COOLANT: 'mecanic_auto',
+    ObligationDefinition.BATTERY: 'mecanic_auto',
+    ObligationDefinition.WIPERS: 'mecanic_auto',
+    ObligationDefinition.FIRE_EXTINGUISHER: 'mecanic_auto',
+    ObligationDefinition.FIRST_AID_KIT: 'mecanic_auto',
+    
+    # ITP Category
+    ObligationDefinition.ITP: 'itp',
+    
+    # Tires Category
+    ObligationDefinition.TIRES: 'vulcanizare_auto_mobila',
+    
+    # Note: Legal/Tax obligations (RCA, CASCO, ROVINIETA) 
+    # currently don't have a specific SERVICE_CATEGORY match.
+}
+
 
 class UserProfile(models.Model):
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

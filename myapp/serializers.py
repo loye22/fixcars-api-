@@ -134,6 +134,12 @@ class SupplierBrandServiceSerializer(serializers.ModelSerializer):
         supplier_lng = getattr(obj.supplier, 'longitude', None)
         return float(supplier_lng) if supplier_lng is not None else 0.0
 
+class SupplierBrandServiceWithoutServicesSerializer(SupplierBrandServiceSerializer):
+    """Serializer for SupplierBrandService that excludes the services field"""
+    class Meta(SupplierBrandServiceSerializer.Meta):
+        fields = [field for field in SupplierBrandServiceSerializer.Meta.fields if field != 'services']
+
+
 class SupplierProfileSerializer(serializers.ModelSerializer):
     """Serializer for supplier profile data (excluding sensitive fields)"""
     class Meta:

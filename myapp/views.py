@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import uuid
-from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice, SalesRepresentative, SupplierReferral, ROMANIAN_CITIES, SECTORS, AppLink, JUDETE, Car, CarObligation
+from .models import UserProfile, OTPVerification, CarBrand, SupplierBrandService, BusinessHours, Service, Review, SERVICE_CATEGORIES, Request, Notification, CoverPhoto, UserDevice, SalesRepresentative, SupplierReferral, ROMANIAN_CITIES, SECTORS, AppLink, JUDETE, Car, CarObligation, ObligationDefinition, OBLIGATION_TO_SERVICE_MAP
 from django.db import models
 from .utils import generate_otp, send_otp_email
 from django.utils import timezone
@@ -21,7 +21,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import AddCarObligationSerializer,  CarBrandSerializer, SupplierBrandServiceSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer, CarObligationSerializer, CarObligationCreateSerializer, CarObligationUpdateByIdSerializer, CarCreateSerializer, CarUpdateSerializer
+from .serializers import AddCarObligationSerializer,  CarBrandSerializer, SupplierBrandServiceSerializer, SupplierBrandServiceWithoutServicesSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer, CarObligationSerializer, CarObligationCreateSerializer, CarObligationUpdateByIdSerializer, CarCreateSerializer, CarUpdateSerializer
 from .onesignal_service import OneSignalService
 import math
 from decimal import Decimal
@@ -3670,3 +3670,72 @@ class AddCarObligationView(APIView):
                 "success": False,
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SuggestBusinessesForObligationView(APIView):
+    """API endpoint to suggest golden tier businesses that can handle a given car obligation"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Get obligation_type from query parameters
+        obligation_type = request.query_params.get('obligation_type')
+        
+        # Validate required parameter
+        if not obligation_type:
+            return Response({
+                'success': False,
+                'error': 'obligation_type parameter is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate obligation_type is in ObligationDefinition choices
+        valid_obligation_types = [choice[0] for choice in ObligationDefinition.choices]
+        if obligation_type not in valid_obligation_types:
+            return Response({
+                'success': False,
+                'error': f'Invalid obligation_type. Valid types are: {", ".join(valid_obligation_types)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Map obligation type to service category
+        service_category = OBLIGATION_TO_SERVICE_MAP.get(obligation_type)
+        
+        # If no mapping exists, return empty results with a message
+        if not service_category:
+            return Response({
+                'success': True,
+                'message': f'No service providers available for obligation type: {obligation_type}',
+                'data': [],
+                'count': 0,
+                'obligation_type': obligation_type
+            }, status=status.HTTP_200_OK)
+        
+        # Query businesses: filter by service category, golden tier subscription, and active status
+        businesses = SupplierBrandService.objects.filter(
+            services__category=service_category,
+            supplier__subscription_plan='gold',
+            active=True
+        ).prefetch_related(
+            'services__tags',
+            'supplier__business_hours',
+            'supplier__supplier_reviews'
+        ).distinct()
+        
+        # Deduplicate by supplier_id (keep first occurrence)
+        seen_supplier_ids = set()
+        unique_businesses = []
+        for business in businesses:
+            supplier_id = str(business.supplier.user_id)
+            if supplier_id not in seen_supplier_ids:
+                seen_supplier_ids.add(supplier_id)
+                unique_businesses.append(business)
+        
+        # Serialize the results (without services field)
+        serializer = SupplierBrandServiceWithoutServicesSerializer(unique_businesses, many=True)
+        
+        return Response({
+            'success': True,
+            'message': f'Businesses found for obligation type: {obligation_type}',
+            'data': serializer.data,
+            'count': len(serializer.data),
+            'obligation_type': obligation_type,
+            'service_category': service_category
+        }, status=status.HTTP_200_OK)
