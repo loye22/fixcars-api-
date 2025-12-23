@@ -1,12 +1,9 @@
 # TODO List
-
-1. Manage multiple car brads under the same card/profile.
+1. fix the theme for all the app 
 2. Add address input with map integration.
 3. Enable automatic scrolling for brand listings.
-4. If all cars are included in the services, display all available brands.
 5. Add a “hide review” option for suppliers.
 6. Display prices directly on the platform.
-7. Set a 2-minute timer to automatically close unfinished requests.
 8. Create an evaluation screen (review screen after the service is done like  glovo).
 9. Update the tiers change service  to have two options: “Request-based” and “Fixed.”
 10. Remove the service photo field from the Service model in API.
@@ -17,6 +14,15 @@
 16. Enable profile editing.
 17. Add an option for mechanics to **edit their working hours**.
 18. Add **hide/delete review** options.
+20. Add an option to update car obligations.
+21. Implement recommended businesses when a car obligation expires.
+22. Add a delete option for car obligations.
+23. Add a “Remember me” option on login.
+24. Make sure that when a brand or tag is selected, these sections become visible and greyed out. 
+25. For the business card, add a new UI element to indicate that it is verified. (silver tier ) 
+26. For the business card, add a new UI element to indicate that it is .(golden tier ) 
+
+
 
 
  

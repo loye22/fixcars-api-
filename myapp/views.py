@@ -3261,6 +3261,68 @@ class CarObligationCreateView(APIView):
         )
 
 
+class CarObligationDeleteView(APIView):
+    """
+    Delete a specific obligation for a car owned by the authenticated user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, car_id, obligation_id):
+        # Ensure the authenticated user has a UserProfile
+        try:
+            user_profile = UserProfile.objects.get(django_user=request.user)
+        except UserProfile.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "error": "User profile not found",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": f"Error fetching user profile: {str(e)}",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Ensure the car exists and belongs to the current user
+        try:
+            car = Car.objects.get(car_id=car_id, user=user_profile)
+        except Car.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Car not found or you do not have permission to modify it.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Ensure the obligation exists for this car
+        try:
+            obligation = CarObligation.objects.get(id=obligation_id, car=car)
+        except CarObligation.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Obligation not found for this car.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        obligation.delete()
+
+        return Response(
+            {
+                "success": True,
+                "message": "Obligation deleted successfully.",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class UserCarCreateView(APIView):
     """
     API endpoint to create a new car for the currently authenticated user.

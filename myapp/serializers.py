@@ -554,6 +554,7 @@ class CarObligationCreateSerializer(serializers.ModelSerializer):
 
 class CarSerializer(serializers.ModelSerializer):
     """Serializer for Car model with brand information"""
+    id = serializers.UUIDField(source='car_id', read_only=True)
     brand_name = serializers.CharField(source='brand.brand_name', read_only=True)
     brand_id = serializers.UUIDField(source='brand.brand_id', read_only=True)
     brand_photo = serializers.SerializerMethodField()
@@ -563,6 +564,7 @@ class CarSerializer(serializers.ModelSerializer):
     class Meta:
         model = Car
         fields = [
+            'id',
             'car_id',
             'brand_id',
             'brand_name',
