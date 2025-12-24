@@ -1,25 +1,20 @@
 # TODO List
-1. fix the theme for all the app 
+1. fix the theme for supplier app  << here >>
 2. Add address input with map integration.
 3. Enable automatic scrolling for brand listings.
-5. Add a “hide review” option for suppliers.
-6. Display prices directly on the platform.
-8. Create an evaluation screen (review screen after the service is done like  glovo).
-9. Update the tiers change service  to have two options: “Request-based” and “Fixed.”
-10. Remove the service photo field from the Service model in API.
-11. fix the notfcation on the ios 
-12. Integrate google map api 
-14. Move all email-related logic to the **Redis server** to handle email processing asynchronously.
-15. Implement a feature that sends an email notification for every new **registration or subscription**.
-16. Enable profile editing.
-17. Add an option for mechanics to **edit their working hours**.
-18. Add **hide/delete review** options.
-21. Implement recommended businesses when a car obligation expires.
-22. Add a delete option for car obligations.
-23. Add a “Remember me” option on login.
-24. Make sure that when a brand or tag is selected, these sections become visible and greyed out. 
-25. For the business card, add a new UI element to indicate that it is verified. (silver tier ) 
-26. For the business card, add a new UI element to indicate that it is .(golden tier ) 
+4. Add a “hide review” option for suppliers.
+5. Display prices directly on the platform.
+6. Create an evaluation screen (review screen after the service is done like  glovo).
+7. Update the tiers change service  to have two options: “Request-based” and “Fixed.”
+8. Remove the service photo field from the Service model in API.
+9. fix the notfcation on the ios and android  
+10. Move all email-related logic to the **Redis server** to handle email processing asynchronously.
+11. Implement a feature that sends an email notification for every new **registration or subscription**.
+12. Enable profile editing.
+13. Add an option for mechanics to **edit their working hours**.
+14. Add **hide/delete review** options.
+15. Add a “Remember me” option on login.
+
 
 
 
