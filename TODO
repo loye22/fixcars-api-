@@ -10,8 +10,6 @@
 9. fix the notfcation on the ios and android  
 10. Move all email-related logic to the **Redis server** to handle email processing asynchronously.
 11. Implement a feature that sends an email notification for every new **registration or subscription**.
-12. Enable profile editing.
-13. Add an option for mechanics to **edit their working hours**.
 14. Add **hide/delete review** options.
 
 

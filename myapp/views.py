@@ -21,7 +21,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import AddCarObligationSerializer,  CarBrandSerializer, SupplierBrandServiceSerializer, SupplierBrandServiceWithoutServicesSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer, CarObligationSerializer, CarObligationCreateSerializer, CarObligationUpdateByIdSerializer, CarCreateSerializer, CarUpdateSerializer
+from .serializers import AddCarObligationSerializer,  CarBrandSerializer, SupplierBrandServiceSerializer, SupplierBrandServiceWithoutServicesSerializer, ServiceWithTagsSerializer, SupplierProfileSerializer, ReviewSummarySerializer, ReviewListSerializer, RequestCreateSerializer, RequestListSerializer, NotificationSerializer, SupplierBrandServiceCreateSerializer, ServiceSerializer, BusinessHoursSerializer, BusinessHoursUpdateSerializer, CarSerializer, CarObligationSerializer, CarObligationCreateSerializer, CarObligationUpdateByIdSerializer, CarCreateSerializer, CarUpdateSerializer, CurrentUserProfileSerializer, CurrentUserProfileUpdateSerializer
 from .onesignal_service import OneSignalService
 import math
 from decimal import Decimal
@@ -3740,3 +3740,80 @@ class SuggestBusinessesForObligationView(APIView):
             'obligation_type': obligation_type,
             'service_category': service_category
         }, status=status.HTTP_200_OK)
+
+
+class CurrentUserProfileView(APIView):
+    """API endpoint to retrieve the current user's profile data"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get current user's profile data"""
+        try:
+            # Get the current user's profile
+            user_profile = getattr(request.user, 'user_profile', None)
+            if not user_profile:
+                return Response({
+                    'success': False,
+                    'error': 'User profile not found.'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Serialize the user profile data
+            serializer = CurrentUserProfileSerializer(user_profile)
+            
+            return Response({
+                'success': True,
+                'message': 'User profile retrieved successfully',
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'An error occurred while fetching user profile: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CurrentUserProfileUpdateView(APIView):
+    """API endpoint to update the current user's profile data"""
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request):
+        """Update current user's profile data"""
+        try:
+            # Get the current user's profile
+            user_profile = getattr(request.user, 'user_profile', None)
+            if not user_profile:
+                return Response({
+                    'success': False,
+                    'error': 'User profile not found.'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Validate and update the user profile
+            serializer = CurrentUserProfileUpdateSerializer(user_profile, data=request.data, partial=False)
+            
+            if serializer.is_valid():
+                serializer.save()
+                
+                # Return updated data
+                response_serializer = CurrentUserProfileSerializer(user_profile)
+                return Response({
+                    'success': True,
+                    'message': 'User profile updated successfully',
+                    'data': response_serializer.data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'An error occurred while updating user profile: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def patch(self, request):
+        """Update current user's profile data (partial update)"""
+        # For this endpoint, we want full validation, so we'll use PUT logic
+        return self.put(request)

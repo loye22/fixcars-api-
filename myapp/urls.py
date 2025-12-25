@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import    AddCarObligationView,admin_login, download_page, sales_representatives_page, privacy_policy_page, home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page, DeleteAccountView, ReferedByView, SupplierBrandServiceOptionsView, SupplierBrandServiceCreateView, BusinessHoursView, BusinessHoursUpdateView, UserCarsListView, CarObligationCreateView, CarObligationDeleteView, UpdateCarObligationByIdView, UserCarCreateView, UserCarUpdateView, InitCarDetailsUpdateView, SuggestBusinessesForObligationView
+from .views import    AddCarObligationView,admin_login, download_page, sales_representatives_page, privacy_policy_page, home , HealthCheckView, AccountStatusView, FileUploadView, ClientSignupView, SupplierSignupView, OTPValidationView, ResendOTPView, LoginView, CarBrandListView, ServicesView, ServicesByCategoryView, SupplierProfileView, ReviewsListView, CreateUpdateReviewView, CreateRequestView, RequestListView, PendingRequestsCountView, NotificationsListView, MarkNotificationReadView, HasUnreadNotificationsView, SupplierProfileSummaryView, RegisterDeviceView, SendNotificationView, UserDetailView, UpdateRequestStatusView, RequestPasswordResetView, ResetPasswordView, reset_password_page, DeleteAccountView, ReferedByView, SupplierBrandServiceOptionsView, SupplierBrandServiceCreateView, BusinessHoursView, BusinessHoursUpdateView, UserCarsListView, CarObligationCreateView, CarObligationDeleteView, UpdateCarObligationByIdView, UserCarCreateView, UserCarUpdateView, InitCarDetailsUpdateView, SuggestBusinessesForObligationView, CurrentUserProfileView, CurrentUserProfileUpdateView
 from rest_framework_simplejwt.views import TokenRefreshView 
 from .views import FirebaseTokenViewSet
 from . import views
@@ -67,5 +67,7 @@ urlpatterns = [
 
          path('api/add-car-obligation/', AddCarObligationView.as_view(), name='add_car_obligation'),
     path('api/suggest-businesses-for-obligation/', SuggestBusinessesForObligationView.as_view(), name='suggest_businesses_for_obligation'),
+    path('api/user/profile/', CurrentUserProfileView.as_view(), name='current_user_profile'),
+    path('api/user/profile/update/', CurrentUserProfileUpdateView.as_view(), name='current_user_profile_update'),
     
 ] 

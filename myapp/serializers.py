@@ -44,6 +44,120 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ['full_name']
 
+
+class CurrentUserProfileSerializer(serializers.ModelSerializer):
+    """Serializer for retrieving current user's profile data"""
+    cover_photos = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = UserProfile
+        fields = ['full_name', 'profile_photo', 'phone', 'business_address', 'bio', 'cover_photos']
+    
+    def get_cover_photos(self, obj):
+        """Return list of cover photo URLs"""
+        return [photo.photo_url for photo in obj.cover_photos.all()]
+
+
+class CurrentUserProfileUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating current user's profile data with validation"""
+    cover_photos = serializers.ListField(
+        child=serializers.URLField(),
+        required=False,
+        allow_empty=True,
+        help_text="List of cover photo URLs"
+    )
+    
+    class Meta:
+        model = UserProfile
+        fields = ['full_name', 'profile_photo', 'phone', 'business_address', 'bio', 'cover_photos']
+        extra_kwargs = {
+            'full_name': {'required': True},
+            'profile_photo': {'required': True},
+            'phone': {'required': True},
+            'business_address': {'required': True},
+            'bio': {'required': True},
+        }
+    
+    def validate_full_name(self, value):
+        """Validate that full_name is not empty"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Full name cannot be empty.")
+        return value.strip()
+    
+    def validate_profile_photo(self, value):
+        """Validate that profile_photo is not empty"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Profile photo URL cannot be empty.")
+        return value.strip()
+    
+    def validate_phone(self, value):
+        """Validate that phone is exactly 10 digits and starts with '07'"""
+        if not value:
+            raise serializers.ValidationError("Phone number cannot be empty.")
+        
+        # Remove any whitespace
+        phone = value.strip()
+        
+        # Check if it's exactly 10 digits
+        if not phone.isdigit() or len(phone) != 10:
+            raise serializers.ValidationError("Phone number must be exactly 10 digits.")
+        
+        # Check if it starts with '07'
+        if not phone.startswith('07'):
+            raise serializers.ValidationError("Phone number must start with '07'.")
+        
+        return phone
+    
+    def validate_business_address(self, value):
+        """Validate that business_address is not empty"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Business address cannot be empty.")
+        return value.strip()
+    
+    def validate_bio(self, value):
+        """Validate that bio is not empty"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Bio cannot be empty.")
+        return value.strip()
+    
+    def validate_cover_photos(self, value):
+        """Validate cover photos list"""
+        if value is None:
+            return []
+        
+        # Validate each URL is not empty
+        validated_urls = []
+        for url in value:
+            if not url or not url.strip():
+                raise serializers.ValidationError("Cover photo URLs cannot be empty.")
+            validated_urls.append(url.strip())
+        
+        return validated_urls
+    
+    def update(self, instance, validated_data):
+        """Update user profile and handle cover photos"""
+        from .models import CoverPhoto
+        
+        # Extract cover_photos from validated_data
+        cover_photos_urls = validated_data.pop('cover_photos', None)
+        
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Handle cover photos if provided
+        if cover_photos_urls is not None:
+            # Clear existing cover photos
+            instance.cover_photos.clear()
+            
+            # Create new cover photos and add them
+            for cover_photo_url in cover_photos_urls:
+                cover_photo = CoverPhoto.objects.create(photo_url=cover_photo_url)
+                instance.cover_photos.add(cover_photo)
+        
+        return instance
+
 class SupplierBrandServiceSerializer(serializers.ModelSerializer):
     supplier_id = serializers.CharField(source='supplier.user_id', read_only=True)
     supplier_name = serializers.CharField(source='supplier.full_name', read_only=True)
