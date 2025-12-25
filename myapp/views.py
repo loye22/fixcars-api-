@@ -1512,6 +1512,7 @@ class SupplierProfileSummaryView(APIView):
             'supplierId': str(supplier.user_id),
             'supplierFullName': supplier.full_name,
             'supplierPhotoUrl': supplier.profile_photo,
+            'subscriptionPlan': supplier.subscription_plan,
             'isOpen': is_open,
             'businessHours': business_hours,
             'completedRequests': completed_requests,
