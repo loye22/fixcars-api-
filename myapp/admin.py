@@ -1,25 +1,28 @@
 from django.contrib import admin
+from import_export.admin import ImportExportModelAdmin
 from .models import SalesRepresentative, SupplierReferral, UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours, CoverPhoto, UserDevice, AppLink, Car, CarObligation
-from django.contrib import admin
-from .models import UserProfile
 # Register your models here.
  
 
-admin.site.register(Tag)
+@admin.register(Tag)
+class TagAdmin(ImportExportModelAdmin):
+    pass
 
 @admin.register(CarBrand)
-class CarBrandAdmin(admin.ModelAdmin):
+class CarBrandAdmin(ImportExportModelAdmin):
     list_display = ('brand_id', 'brand_name', 'brand_photo')
     search_fields = ('brand_name',)
     readonly_fields = ('brand_id',)
     ordering = ('brand_name',)
 
-admin.site.register(CoverPhoto)
+@admin.register(CoverPhoto)
+class CoverPhotoAdmin(ImportExportModelAdmin):
+    pass
 
    
  
 @admin.register(SupplierBrandService)
-class SupplierBrandServiceAdmin(admin.ModelAdmin):
+class SupplierBrandServiceAdmin(ImportExportModelAdmin):
     list_display = ('supplier', 'brand', 'city', 'sector', 'active')
     search_fields = ('supplier__full_name', 'brand__brand_name')
     list_filter = ('city', 'sector', 'active')
@@ -31,14 +34,14 @@ class SupplierBrandServiceAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(Service)
-class ServiceAdmin(admin.ModelAdmin):
+class ServiceAdmin(ImportExportModelAdmin):
     list_display = ('service_id' , 'service_name', 'category', 'service_photo')
     search_fields = ('service_name',)
     list_filter = ('category',)
     filter_horizontal = ('tags',) 
 
 @admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
+class UserProfileAdmin(ImportExportModelAdmin):
     # list_display = (
     #     'user_id', 'full_name', 'email', 'phone', 'user_type', 'city', 'sector',
     #     'approval_status', 'account_status', 'is_active', 'is_verified', 'created_at'
@@ -52,7 +55,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 
 @admin.register(OTPVerification)
-class OTPVerificationAdmin(admin.ModelAdmin):
+class OTPVerificationAdmin(ImportExportModelAdmin):
     list_display = ('user', 'otp', 'is_used', 'expires_at', 'created_at')
     list_filter = ('is_used', 'created_at', 'expires_at')
     search_fields = ('user__email', 'user__full_name', 'otp')
@@ -84,7 +87,7 @@ class OTPVerificationAdmin(admin.ModelAdmin):
     user_name.short_description = 'User Name'
 
 @admin.register(Review)
-class ReviewAdmin(admin.ModelAdmin):
+class ReviewAdmin(ImportExportModelAdmin):
     list_display = ('client', 'supplier', 'rating', 'comment', 'created_at')
     list_filter = ('rating', 'created_at')
     search_fields = ('client__full_name', 'supplier__full_name', 'comment')
@@ -99,7 +102,7 @@ class ReviewAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(BusinessHours)
-class BusinessHoursAdmin(admin.ModelAdmin):
+class BusinessHoursAdmin(ImportExportModelAdmin):
     list_display = ('supplier',)
     search_fields = ('supplier__full_name',)
     
@@ -120,21 +123,21 @@ class BusinessHoursAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(Request)
-class RequestAdmin(admin.ModelAdmin):
+class RequestAdmin(ImportExportModelAdmin):
     list_display = ('id', 'supplier', 'client', 'longitude', 'latitude', 'phone_number', 'reason', 'status')
     search_fields = ('supplier__full_name', 'client__full_name', 'phone_number', 'reason')
     list_filter = ('status', 'created_at')
     readonly_fields = ('id', 'created_at')
 
 @admin.register(Notification)
-class NotificationAdmin(admin.ModelAdmin):
+class NotificationAdmin(ImportExportModelAdmin):
     list_display = ('notification_id', 'receiver', 'type', 'message', 'is_read', 'created_at')
     search_fields = ('receiver__full_name', 'message', 'type')
     list_filter = ('type', 'is_read', 'created_at')
     readonly_fields = ('notification_id', 'created_at')
 
 @admin.register(UserDevice)
-class UserDeviceAdmin(admin.ModelAdmin):
+class UserDeviceAdmin(ImportExportModelAdmin):
     list_display = ('user', 'player_id', 'is_active', 'created_at')
     search_fields = ('user__full_name', 'user__email', 'player_id')
     list_filter = ('is_active', 'created_at')
@@ -157,7 +160,7 @@ class UserDeviceAdmin(admin.ModelAdmin):
 
 
 @admin.register(SalesRepresentative)
-class SalesRepresentativeAdmin(admin.ModelAdmin):
+class SalesRepresentativeAdmin(ImportExportModelAdmin):
     list_display = ('representative_id', 'name', 'email', 'judet', 'address', 'phone', 'created_at')
     search_fields = ('name', 'email', 'phone', 'judet', 'address')
     list_filter = ('judet', 'created_at')
@@ -166,7 +169,7 @@ class SalesRepresentativeAdmin(admin.ModelAdmin):
 
 
 @admin.register(SupplierReferral)
-class SupplierReferralAdmin(admin.ModelAdmin):
+class SupplierReferralAdmin(ImportExportModelAdmin):
     list_display = (
         'referral_id',
         'sales_representative',
@@ -196,7 +199,7 @@ class SupplierReferralAdmin(admin.ModelAdmin):
 
 
 @admin.register(AppLink)
-class AppLinkAdmin(admin.ModelAdmin):
+class AppLinkAdmin(ImportExportModelAdmin):
     list_display = ('url', 'timestamp')
     search_fields = ('url',)
     readonly_fields = ('timestamp',)
@@ -204,7 +207,7 @@ class AppLinkAdmin(admin.ModelAdmin):
 
 
 @admin.register(Car)
-class CarAdmin(admin.ModelAdmin):
+class CarAdmin(ImportExportModelAdmin):
     list_display = ('car_id', 'user', 'brand', 'model', 'year', 'license_plate', 'vin', 'current_km', 'last_km_updated_at', 'created_at')
     search_fields = ('license_plate', 'vin', 'brand__brand_name', 'model', 'user__full_name', 'user__email')
     list_filter = ('brand', 'year', 'created_at')
@@ -229,7 +232,7 @@ class CarAdmin(admin.ModelAdmin):
 
 
 @admin.register(CarObligation)
-class CarObligationAdmin(admin.ModelAdmin):
+class CarObligationAdmin(ImportExportModelAdmin):
     list_display = ('id', 'car', 'obligation_type', 'reminder_type', 'due_date', 'created_at')
     search_fields = ('car__license_plate', 'car__brand__brand_name', 'car__model', 'car__user__full_name', 'note')
     list_filter = ('obligation_type', 'reminder_type', 'due_date', 'created_at')
