@@ -1,15 +1,23 @@
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 from .models import SalesRepresentative, SupplierReferral, UserProfile, CarBrand, Tag, Service, SupplierBrandService, Review, Notification, Request, OTPVerification, BusinessHours, CoverPhoto, UserDevice, AppLink, Car, CarObligation
+from .resources import (
+    TagResource, CarBrandResource, CoverPhotoResource, ServiceResource,
+    UserProfileResource, SupplierBrandServiceResource, ReviewResource,
+    NotificationResource, RequestResource, OTPVerificationResource,
+    BusinessHoursResource, UserDeviceResource, SalesRepresentativeResource,
+    SupplierReferralResource, AppLinkResource, CarResource, CarObligationResource
+)
 # Register your models here.
- 
+
 
 @admin.register(Tag)
 class TagAdmin(ImportExportModelAdmin):
-    pass
+    resource_class = TagResource
 
 @admin.register(CarBrand)
 class CarBrandAdmin(ImportExportModelAdmin):
+    resource_class = CarBrandResource
     list_display = ('brand_id', 'brand_name', 'brand_photo')
     search_fields = ('brand_name',)
     readonly_fields = ('brand_id',)
@@ -17,12 +25,13 @@ class CarBrandAdmin(ImportExportModelAdmin):
 
 @admin.register(CoverPhoto)
 class CoverPhotoAdmin(ImportExportModelAdmin):
-    pass
+    resource_class = CoverPhotoResource
 
    
  
 @admin.register(SupplierBrandService)
 class SupplierBrandServiceAdmin(ImportExportModelAdmin):
+    resource_class = SupplierBrandServiceResource
     list_display = ('supplier', 'brand', 'city', 'sector', 'active')
     search_fields = ('supplier__full_name', 'brand__brand_name')
     list_filter = ('city', 'sector', 'active')
@@ -35,6 +44,7 @@ class SupplierBrandServiceAdmin(ImportExportModelAdmin):
 
 @admin.register(Service)
 class ServiceAdmin(ImportExportModelAdmin):
+    resource_class = ServiceResource
     list_display = ('service_id' , 'service_name', 'category', 'service_photo')
     search_fields = ('service_name',)
     list_filter = ('category',)
@@ -42,6 +52,7 @@ class ServiceAdmin(ImportExportModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(ImportExportModelAdmin):
+    resource_class = UserProfileResource
     # list_display = (
     #     'user_id', 'full_name', 'email', 'phone', 'user_type', 'city', 'sector',
     #     'approval_status', 'account_status', 'is_active', 'is_verified', 'created_at'
@@ -56,6 +67,7 @@ class UserProfileAdmin(ImportExportModelAdmin):
 
 @admin.register(OTPVerification)
 class OTPVerificationAdmin(ImportExportModelAdmin):
+    resource_class = OTPVerificationResource
     list_display = ('user', 'otp', 'is_used', 'expires_at', 'created_at')
     list_filter = ('is_used', 'created_at', 'expires_at')
     search_fields = ('user__email', 'user__full_name', 'otp')
@@ -88,6 +100,7 @@ class OTPVerificationAdmin(ImportExportModelAdmin):
 
 @admin.register(Review)
 class ReviewAdmin(ImportExportModelAdmin):
+    resource_class = ReviewResource
     list_display = ('client', 'supplier', 'rating', 'comment', 'created_at')
     list_filter = ('rating', 'created_at')
     search_fields = ('client__full_name', 'supplier__full_name', 'comment')
@@ -103,6 +116,7 @@ class ReviewAdmin(ImportExportModelAdmin):
 
 @admin.register(BusinessHours)
 class BusinessHoursAdmin(ImportExportModelAdmin):
+    resource_class = BusinessHoursResource
     list_display = ('supplier',)
     search_fields = ('supplier__full_name',)
     
@@ -124,6 +138,7 @@ class BusinessHoursAdmin(ImportExportModelAdmin):
 
 @admin.register(Request)
 class RequestAdmin(ImportExportModelAdmin):
+    resource_class = RequestResource
     list_display = ('id', 'supplier', 'client', 'longitude', 'latitude', 'phone_number', 'reason', 'status')
     search_fields = ('supplier__full_name', 'client__full_name', 'phone_number', 'reason')
     list_filter = ('status', 'created_at')
@@ -131,6 +146,7 @@ class RequestAdmin(ImportExportModelAdmin):
 
 @admin.register(Notification)
 class NotificationAdmin(ImportExportModelAdmin):
+    resource_class = NotificationResource
     list_display = ('notification_id', 'receiver', 'type', 'message', 'is_read', 'created_at')
     search_fields = ('receiver__full_name', 'message', 'type')
     list_filter = ('type', 'is_read', 'created_at')
@@ -138,6 +154,7 @@ class NotificationAdmin(ImportExportModelAdmin):
 
 @admin.register(UserDevice)
 class UserDeviceAdmin(ImportExportModelAdmin):
+    resource_class = UserDeviceResource
     list_display = ('user', 'player_id', 'is_active', 'created_at')
     search_fields = ('user__full_name', 'user__email', 'player_id')
     list_filter = ('is_active', 'created_at')
@@ -161,6 +178,7 @@ class UserDeviceAdmin(ImportExportModelAdmin):
 
 @admin.register(SalesRepresentative)
 class SalesRepresentativeAdmin(ImportExportModelAdmin):
+    resource_class = SalesRepresentativeResource
     list_display = ('representative_id', 'name', 'email', 'judet', 'address', 'phone', 'created_at')
     search_fields = ('name', 'email', 'phone', 'judet', 'address')
     list_filter = ('judet', 'created_at')
@@ -170,6 +188,7 @@ class SalesRepresentativeAdmin(ImportExportModelAdmin):
 
 @admin.register(SupplierReferral)
 class SupplierReferralAdmin(ImportExportModelAdmin):
+    resource_class = SupplierReferralResource
     list_display = (
         'referral_id',
         'sales_representative',
@@ -200,6 +219,7 @@ class SupplierReferralAdmin(ImportExportModelAdmin):
 
 @admin.register(AppLink)
 class AppLinkAdmin(ImportExportModelAdmin):
+    resource_class = AppLinkResource
     list_display = ('url', 'timestamp')
     search_fields = ('url',)
     readonly_fields = ('timestamp',)
@@ -208,6 +228,7 @@ class AppLinkAdmin(ImportExportModelAdmin):
 
 @admin.register(Car)
 class CarAdmin(ImportExportModelAdmin):
+    resource_class = CarResource
     list_display = ('car_id', 'user', 'brand', 'model', 'year', 'license_plate', 'vin', 'current_km', 'last_km_updated_at', 'created_at')
     search_fields = ('license_plate', 'vin', 'brand__brand_name', 'model', 'user__full_name', 'user__email')
     list_filter = ('brand', 'year', 'created_at')
@@ -233,6 +254,7 @@ class CarAdmin(ImportExportModelAdmin):
 
 @admin.register(CarObligation)
 class CarObligationAdmin(ImportExportModelAdmin):
+    resource_class = CarObligationResource
     list_display = ('id', 'car', 'obligation_type', 'reminder_type', 'due_date', 'created_at')
     search_fields = ('car__license_plate', 'car__brand__brand_name', 'car__model', 'car__user__full_name', 'note')
     list_filter = ('obligation_type', 'reminder_type', 'due_date', 'created_at')
